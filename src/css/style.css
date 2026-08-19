@@ -1,0 +1,709 @@
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0
+        }
+
+        body {
+            background: #080c18;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            font-family: 'Segoe UI',sans-serif;
+            color: #e0e6f0;
+            padding: 15px;
+            overflow-x: hidden
+        }
+
+        #game-container {
+            display: flex;
+            flex-direction: row;
+            gap: 16px;
+            width: 100%;
+            max-width: 1160px;
+            align-items: stretch
+        }
+
+        /* 좌측 게임 플레이 영역 */
+        #left-panel {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 8px
+        }
+
+        h1 {
+            font-size: 22px;
+            font-weight: 800;
+            letter-spacing: 3px;
+            color: #7eb8f7;
+            text-transform: uppercase;
+            margin-bottom: 2px;
+            text-shadow: 0 0 10px rgba(126,184,247,0.3)
+        }
+
+        /* ── 보스 바 ── */
+        #boss-wrap {
+            width: 100%;
+            background: #1a0a0a;
+            border: 1px solid #4a1a1a;
+            border-radius: 8px;
+            padding: 8px 14px;
+            display: none;
+            align-items: center;
+            gap: 10px;
+            font-size: 12px;
+            color: #f87171
+        }
+
+        #boss-outer {
+            flex: 1;
+            height: 12px;
+            background: #2a1010;
+            border-radius: 6px;
+            overflow: hidden;
+            border: 1px solid #ff444433
+        }
+
+        #boss-inner {
+            height: 100%;
+            background: linear-gradient(90deg,#ff4444,#ff9900);
+            border-radius: 6px;
+            transition: width .1s
+        }
+
+        #boss-timer {
+            font-size: 16px;
+            font-weight: 700;
+            color: #ff6644;
+            min-width: 36px;
+            text-align: right
+        }
+
+        /* ── 적 밀도 바 ── */
+        #ec-bar {
+            width: 100%;
+            background: #111827;
+            border: 1px solid #1e2d47;
+            border-radius: 8px;
+            padding: 6px 14px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 12px;
+            color: #5a7090
+        }
+
+        #ec-outer {
+            flex: 1;
+            height: 8px;
+            background: #1e2d47;
+            border-radius: 4px;
+            overflow: hidden
+        }
+
+        #ec-inner {
+            height: 100%;
+            background: #f87171;
+            border-radius: 4px;
+            transition: width .15s
+        }
+
+        /* ── 캔버스 ── */
+        #canvas-wrap {
+            position: relative;
+            width: 100%;
+            border-radius: 12px;
+            overflow: hidden;
+            border: 2px solid #1e2d47;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5)
+        }
+
+        canvas {
+            display: block;
+            width: 100%;
+            background: #09120b
+        }
+
+        /* 하단 로그 & 안내 */
+        #log {
+            width: 100%;
+            background: #0d1420;
+            border: 1px solid #1a2535;
+            border-radius: 8px;
+            padding: 8px 14px;
+            font-size: 12px;
+            color: #708ab0;
+            height: 36px;
+            overflow: hidden;
+            display: flex;
+            align-items: center
+        }
+
+        #info {
+            width: 100%;
+            background: #111827;
+            border: 1px solid #1e2d47;
+            border-radius: 8px;
+            padding: 9px 14px;
+            font-size: 11.5px;
+            color: #5a7090;
+            line-height: 1.8
+        }
+
+            #info b {
+                color: #7eb8f7
+            }
+
+        /* 우측 대형 컨트롤 패널 영역 */
+        #right-panel {
+            width: 290px;
+            background: #111827;
+            border: 2px solid #1e2d47;
+            border-radius: 12px;
+            padding: 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3)
+        }
+
+        /* 대형 스탯 보드 */
+        .stat-board {
+            background: #0d1422;
+            border: 1px solid #1e3050;
+            border-radius: 8px;
+            padding: 12px;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px
+        }
+
+        .stat-box {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            padding: 4px 6px
+        }
+
+        .stat-lbl {
+            font-size: 11px;
+            color: #5a7090;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+            margin-bottom: 2px
+        }
+
+        .stat-v {
+            font-size: 18px;
+            font-weight: 800
+        }
+
+        .cg {
+            color: #f5c842;
+            text-shadow: 0 0 8px rgba(245,200,66,0.2)
+        }
+
+        .cw {
+            color: #7eb8f7
+        }
+
+        .ce {
+            color: #f87171
+        }
+
+        .cs {
+            color: #a78bfa
+        }
+
+        /* ── 우측 대형 컨트롤 버튼들 ── */
+        #control-btns {
+            display: flex;
+            flex-direction: column;
+            gap: 10px
+        }
+
+        .main-btn {
+            width: 100%;
+            padding: 14px 12px;
+            border-radius: 10px;
+            border: 1px solid #2a4065;
+            background: linear-gradient(135deg, #162238, #0f1826);
+            color: #e2ecf8;
+            font-size: 14px;
+            font-weight: 700;
+            cursor: pointer;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 4px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.2);
+            transition: background 0.15s, border-color 0.15s, transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+            .main-btn .sub-lbl {
+                font-size: 11px;
+                font-weight: 400;
+                color: #617d9d;
+            }
+
+            .main-btn:hover:not(:disabled) {
+                background: linear-gradient(135deg, #203354, #131e30);
+                border-color: #538bd4;
+                transform: scale(1.03);
+            }
+
+            .main-btn:active:not(:disabled) {
+                transform: scale(0.92);
+            }
+
+            .main-btn.bounce-active {
+                animation: boing 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.5);
+            }
+
+        /* 특수 버튼 색상 강조 */
+        #btn-s {
+            border-color: #f5c84244;
+            background: linear-gradient(135deg, #22201a, #141310)
+        }
+
+            #btn-s:hover:not(:disabled) {
+                border-color: #f5c842;
+                background: linear-gradient(135deg, #332f22, #1a1914)
+            }
+
+            #btn-s .sub-lbl {
+                color: #b39842
+            }
+
+        /* 판매 버튼 전용 스타일 */
+        #btn-x {
+            border-color: #f8717144;
+            background: linear-gradient(135deg, #2a1414, #180a0a);
+        }
+
+            #btn-x:hover:not(:disabled) {
+                border-color: #f87171;
+                background: linear-gradient(135deg, #3a1c1c, #240f0f);
+            }
+
+            #btn-x .sub-lbl {
+                color: #f87171;
+            }
+
+        #btn-g {
+            border: 1px dashed #ec4899;
+            background: linear-gradient(135deg, #201222, #100812);
+            color: #fbcfe8;
+        }
+
+            #btn-g:hover:not(:disabled) {
+                border-color: #ec4899;
+                background: linear-gradient(135deg, #381a3d, #1a081f);
+            }
+
+            #btn-g.ready {
+                border: 2px solid #ec4899;
+                background: linear-gradient(135deg, #4c0519, #831843);
+                color: #ffffff;
+                box-shadow: 0 0 15px rgba(236,72,153,0.5);
+                animation: pulse-border 1.5s infinite;
+            }
+
+                #btn-g.ready .sub-lbl {
+                    color: #f472b6;
+                    font-weight: bold;
+                }
+
+        @keyframes pulse-border {
+            0% {
+                box-shadow: 0 0 5px rgba(236,72,153,0.4);
+            }
+
+            50% {
+                box-shadow: 0 0 20px rgba(236,72,153,0.8);
+            }
+
+            100% {
+                box-shadow: 0 0 5px rgba(236,72,153,0.4);
+            }
+        }
+
+        #btn-a {
+            border-color: #38bdf833;
+            background: linear-gradient(135deg, #13242c, #0b141a)
+        }
+
+            #btn-a:hover:not(:disabled) {
+                border-color: #38bdf8;
+                background: linear-gradient(135deg, #1c3644, #101e26)
+            }
+
+            #btn-a .sub-lbl {
+                color: #3aa1cc
+            }
+
+        #btn-f {
+            background: #111;
+            border-color: #333;
+            padding: 10px 14px
+        }
+
+            #btn-f.speed-active {
+                background: linear-gradient(135deg, #1d1836, #100d21);
+                border-color: #a78bfa;
+                color: #c4b5fd
+            }
+
+        .main-btn:disabled {
+            opacity: .3;
+            cursor: default;
+            transform: none !important;
+            animation: none !important;
+            box-shadow: none
+        }
+
+        @keyframes boing {
+            0% {
+                transform: scale(0.92);
+            }
+
+            40% {
+                transform: scale(1.08);
+            }
+
+            70% {
+                transform: scale(0.97);
+            }
+
+            100% {
+                transform: scale(1);
+            }
+        }
+
+        @keyframes gear-spin {
+            from {
+                transform: rotate(0deg);
+            }
+
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        .gear-spin-anim {
+            animation: gear-spin 8s linear infinite;
+            transform-origin: 50% 50%;
+        }
+
+        /* 조합법 가이드 카드 */
+        .recipe-card {
+            background: #0d1420;
+            border: 1px solid #1e2d47;
+            border-radius: 8px;
+            padding: 10px;
+            margin-top: auto;
+        }
+
+        .recipe-title {
+            font-size: 11px;
+            font-weight: 700;
+            color: #a78bfa;
+            text-transform: uppercase;
+            margin-bottom: 6px;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .recipe-list {
+            font-size: 11px;
+            color: #64748b;
+            line-height: 1.6;
+        }
+
+        .recipe-item {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 2px;
+        }
+
+            .recipe-item span.ok {
+                color: #4ade80;
+                font-weight: bold;
+            }
+
+            .recipe-item span.no {
+                color: #f87171;
+            }
+
+        /* ── 툴팁 ── */
+        #tooltip {
+            position: absolute;
+            background: #0d1a2eed;
+            border: 1px solid #2a4a6a;
+            border-radius: 10px;
+            padding: 10px 14px;
+            pointer-events: none;
+            display: none;
+            z-index: 20;
+            min-width: 190px;
+            max-width: 240px;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.4)
+        }
+
+            #tooltip h3 {
+                font-size: 14px;
+                font-weight: 700;
+                margin-bottom: 6px
+            }
+
+        .tt-row {
+            font-size: 12px;
+            color: #8aaabb;
+            line-height: 1.8
+        }
+
+            .tt-row span {
+                color: #e0e6f0;
+                float: right
+            }
+
+        .tt-desc {
+            font-size: 11px;
+            color: #5a7a9a;
+            margin-top: 6px;
+            line-height: 1.5;
+            border-top: 1px solid #1e3050;
+            padding-top: 6px
+        }
+
+        /* ── 강화 모달 ── */
+        #upg-modal {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,.82);
+            z-index: 100;
+            align-items: flex-start;
+            justify-content: center;
+            padding-top: 50px
+        }
+
+            #upg-modal.show {
+                display: flex
+            }
+
+        #upg-box {
+            background: #0f1c2e;
+            border: 2px solid #2a4a6a;
+            border-radius: 14px;
+            padding: 18px 22px;
+            width: min(660px,96vw);
+            max-height: 85vh;
+            overflow-y: auto;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.6)
+        }
+
+            #upg-box h2 {
+                font-size: 16px;
+                font-weight: 700;
+                margin-bottom: 3px;
+                color: #7eb8f7
+            }
+
+            #upg-box .sub {
+                font-size: 11.5px;
+                color: #5a7090;
+                margin-bottom: 12px
+            }
+
+        .upg-type-section {
+            border: 1px solid #1e3050;
+            border-radius: 10px;
+            padding: 10px 12px;
+            margin-bottom: 10px;
+            background: #0a1520
+        }
+
+        .upg-type-header {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 6px;
+            padding-bottom: 6px;
+            border-bottom: 1px solid #1e3050
+        }
+
+        .upg-type-stats {
+            font-size: 11px;
+            color: #4a7a9a;
+            margin-bottom: 6px;
+            line-height: 1.7
+        }
+
+        .upg-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 8px 10px;
+            border-radius: 7px;
+            background: #0d1a2a;
+            margin-bottom: 5px;
+            gap: 10px
+        }
+
+        .upg-left {
+            flex: 1
+        }
+
+        .upg-name {
+            font-size: 13px;
+            color: #c8d8f0;
+            font-weight: 600
+        }
+
+        .upg-desc {
+            font-size: 11px;
+            color: #4a7a9a;
+            margin-top: 2px
+        }
+
+        .upg-cost {
+            font-size: 11px;
+            color: #f5c842;
+            margin-top: 2px;
+            font-weight: 600
+        }
+
+        .upg-cnt {
+            font-size: 11px;
+            color: #fbbf24;
+            float: right
+        }
+
+        .upg-btn {
+            padding: 6px 14px;
+            font-size: 12px;
+            font-weight: 700;
+            border-radius: 6px;
+            border: 1px solid #2a4a6a;
+            background: #162033;
+            color: #c8d8f0;
+            cursor: pointer;
+            transition: background 0.15s, border-color 0.15s, transform 0.2s;
+        }
+
+            .upg-btn:hover:not(:disabled) {
+                background: #1e3050;
+                border-color: #4a7aaf;
+                transform: scale(1.05)
+            }
+
+            .upg-btn:active:not(:disabled) {
+                transform: scale(0.93)
+            }
+
+            .upg-btn:disabled {
+                opacity: .3;
+                cursor: default
+            }
+
+        #upg-close {
+            margin-top: 10px;
+            width: 100%;
+            padding: 10px;
+            border-radius: 8px;
+            border: 1px solid #2a4a6a;
+            background: #162033;
+            color: #7eb8f7;
+            font-size: 13px;
+            font-weight: 700;
+            cursor: pointer
+        }
+
+            #upg-close:hover {
+                background: #1e3050
+            }
+
+        .rarity {
+            display: inline-block;
+            font-size: 10px;
+            font-weight: 700;
+            letter-spacing: .5px;
+            padding: 2px 7px;
+            border-radius: 4px;
+            margin-left: 6px;
+            vertical-align: middle
+        }
+
+        .r-common {
+            background: #1e293b;
+            color: #94a3b8;
+            border: 1px solid #475569
+        }
+
+        .r-rare {
+            background: #2e1065;
+            color: #c4b5fd;
+            border: 1px solid #7c3aed
+        }
+
+        .r-epic {
+            background: #451a03;
+            color: #fcd34d;
+            border: 1px solid #d97706
+        }
+
+        .r-legend {
+            background: #9d174d;
+            color: #fbcfe8;
+            border: 1px solid #ec4899
+        }
+
+        /* ── 오버레이 ── */
+        #overlay {
+            display: none;
+            position: absolute;
+            inset: 0;
+            background: rgba(5,10,20,.92);
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 14px;
+            z-index: 10
+        }
+
+            #overlay.show {
+                display: flex
+            }
+
+            #overlay h2 {
+                font-size: 32px;
+                font-weight: 800;
+                letter-spacing: 2px
+            }
+
+            #overlay p {
+                color: #8a9ab0;
+                font-size: 14px;
+                text-align: center;
+                max-width: 360px;
+                line-height: 1.6
+            }
+
+            #overlay button {
+                padding: 12px 32px;
+                font-size: 15px;
+                font-weight: 700;
+                border-radius: 8px;
+                border: 1px solid #4a7aaf;
+                background: #1a3050;
+                color: #c8d8f0;
+                cursor: pointer
+            }
+
+                #overlay button:hover {
+                    background: #1e3a60
+                }

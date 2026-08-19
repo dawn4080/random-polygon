@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1.0">
+    <title>Shape Defense (Story Update)</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="src/css/style.css">
+</head>
+<body>
+    <!-- ── 오프닝 스토리 모달 ── -->
+    <div id="story-modal" class="fixed inset-0 bg-[#060b13] z-[200] flex items-center justify-center p-4">
+        <div class="bg-[#0b1420] border-2 border-[#1e2d47] rounded-[16px] max-w-[620px] w-full p-8 shadow-[0_20px_50px_rgba(0,0,0,0.8)] text-center flex flex-col gap-6 relative overflow-hidden">
+            <div class="absolute -right-12 -top-12 w-32 h-32 bg-sky-500/10 rounded-full blur-2xl"></div>
+            <div class="absolute -left-12 -bottom-12 w-32 h-32 bg-purple-500/10 rounded-full blur-2xl"></div>
+            
+            <div class="flex items-center justify-center gap-2 text-pink-400 font-bold tracking-widest text-xs uppercase bg-pink-950/40 border border-pink-800/50 px-4 py-1 rounded-full w-fit mx-auto">
+                ⚠️ 긴급 무전 - 역사의 순간
+            </div>
+            
+            <h2 id="story-title" class="text-2xl font-extrabold text-slate-100 tracking-tight leading-snug">
+                오래된 기하학의 행성
+            </h2>
+
+            <div class="min-h-[140px] flex items-center justify-center">
+                <p id="story-desc" class="text-sm text-[#8aaabb] leading-relaxed tracking-normal text-center whitespace-pre-wrap px-4">
+                    이야기가 로딩 중입니다...
+                </p>
+            </div>
+
+            <div class="flex justify-center gap-4 my-2">
+                <div id="story-visual" class="w-16 h-16 bg-[#070c14] border border-[#1e3050] rounded-[12px] flex items-center justify-center text-3xl shadow-inner">
+                    📐
+                </div>
+            </div>
+
+            <div class="flex items-center justify-between border-t border-[#1e3050]/50 pt-5 mt-2">
+                <button onclick="gm.skipStory()" class="text-xs text-[#5a7090] hover:text-rose-400 font-bold transition">
+                    스킵하기 [ESC]
+                </button>
+                <button id="story-next-btn" onclick="gm.nextStory()" class="px-6 py-2.5 rounded-[8px] bg-gradient-to-r from-sky-600 to-blue-600 hover:from-sky-500 hover:to-blue-500 text-white text-xs font-bold transition shadow-[0_4px_12px_rgba(14,165,233,0.3)]">
+                    다음 이야기 ➔
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div id="game-container">
+
+        <!-- 좌측 영역 -->
+        <div id="left-panel">
+            <h1>⬡ Shape Defense</h1>
+
+            <div id="boss-wrap">
+                <span>👹 보스 타임아웃</span>
+                <div id="boss-outer"><div id="boss-inner" style="width:100%"></div></div>
+                <span id="boss-timer">60s</span>
+            </div>
+
+            <div id="ec-bar">
+                <span>적 밀도</span>
+                <div id="ec-outer"><div id="ec-inner" style="width:0%"></div></div>
+                <span id="ec-text">0 / 100</span>
+            </div>
+
+            <div id="canvas-wrap">
+                <canvas id="c" width="820" height="620"></canvas>
+                <div id="tooltip">
+                    <h3 id="tt-name"></h3>
+                    <div id="tt-body"></div>
+                </div>
+                <div id="overlay">
+                    <h2 id="ov-title">게임 오버</h2>
+                    <p id="ov-sub"></p>
+                    <button onclick="gm.restart()">다시 시작</button>
+                </div>
+            </div>
+
+            <div id="log">오프닝 스토리 재생 중...</div>
+            <div id="info">
+                <b>[오프닝 프롤로그 추가!]</b> 다각형의 차별에 반격한 동그라미 군대의 침략 사건! 방어선을 굳건히 하십시오. <br>
+                <b>배속 시스템:</b> 1배속 ➔ 1.5배속 ➔ 2.0배속 순환 토글. 필드 최대 소환 수량 <b>20마리 제한</b>.
+            </div>
+        </div>
+
+        <!-- 우측 대형 컨트롤 패널 영역 -->
+        <div id="right-panel">
+            <div class="stat-board">
+                <div class="stat-box"><span class="stat-lbl">소지 골드</span><span class="stat-v cg" id="s-gold">150G</span></div>
+                <div class="stat-box"><span class="stat-lbl">현재 웨이브</span><span class="stat-v cw" id="s-wave">0</span></div>
+                <div class="stat-box"><span class="stat-lbl">타워 개수</span><span class="stat-v cs" id="s-towers">0 / 20</span></div>
+                <div class="stat-box"><span class="stat-lbl">획득 점수</span><span class="stat-v ce" id="s-score">0</span></div>
+            </div>
+
+            <div id="control-btns">
+                <button class="main-btn" id="btn-s" type="button" onclick="gm.triggerBtnAnim('btn-s'); gm.summonTower()">
+                    <span>🤖 타워 소환</span>
+                    <span class="sub-lbl" id="s-cost">비용: 50G [S]</span>
+                </button>
+
+                <!-- 새로 추가된 판매 버튼 -->
+                <button class="main-btn" id="btn-x" type="button" onclick="gm.triggerBtnAnim('btn-x'); gm.sellTower()" disabled>
+                    <span>💰 타워 판매</span>
+                    <span class="sub-lbl" id="x-cost">타워 선택 필요 [X]</span>
+                </button>
+
+                <button class="main-btn" id="btn-g" type="button" onclick="gm.triggerBtnAnim('btn-g'); gm.openRecipeModal()">
+                    <span>🔮 조합 연성소</span>
+                    <span class="sub-lbl">전설 조합법 [G]</span>
+                </button>
+
+                <button class="main-btn" id="btn-a" type="button" onclick="gm.triggerBtnAnim('btn-a'); gm.triggerAutoMerge()">
+                    <span>✨ 일괄 자동합성</span>
+                    <span class="sub-lbl">모든 쌍 머지 [A]</span>
+                </button>
+
+                <button class="main-btn" id="btn-u" type="button" onclick="gm.triggerBtnAnim('btn-u'); gm.upgradeOpen?gm.closeUpgrade():gm.openUpgrade()">
+                    <span>🛠️ 종류 연구/강화</span>
+                    <span class="sub-lbl">강화 연구소 열기 [U]</span>
+                </button>
+
+                <button class="main-btn" id="btn-f" type="button" onclick="gm.triggerBtnAnim('btn-f'); gm.toggleSpeed()">
+                    <span id="speed-txt">▶ 속도: 1.0×</span>
+                    <span class="sub-lbl">클릭 시 토글 [F]</span>
+                </button>
+            </div>
+
+            <!-- 조합법 가이드 UI -->
+            <div class="recipe-card">
+                <div class="recipe-title">
+                    <span>⚙️ 전설 기어 조합법</span>
+                    <span>레벨</span>
+                </div>
+                <div class="recipe-list">
+                    <div class="recipe-item" id="rec-tri"><span>▲ 삼각형 타워</span><span id="rec-tri-st" class="no">L7 미달</span></div>
+                    <div class="recipe-item" id="rec-squ"><span>■ 사각형 타워</span><span id="rec-squ-st" class="no">L7 미달</span></div>
+                    <div class="recipe-item" id="rec-star"><span>★ 별 타워</span><span id="rec-star-st" class="no">L5 미달</span></div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- 강화 모달 -->
+    <div id="upg-modal">
+        <div id="upg-box">
+            <h2>종류 강화 연구소</h2>
+            <div class="sub" id="upg-sub">현재 골드: --</div>
+            <div id="upg-body"></div>
+            <button id="upg-close" type="button" onclick="gm.closeUpgrade()">연구소 닫기 [U]</button>
+        </div>
+    </div>
+
+    <!-- ── 신규 전설 조합 연성소 모달 ── -->
+    <div id="recipe-modal" style="display:none;" class="fixed inset-0 bg-black/85 z-[100] flex items-start justify-center pt-12 px-4 overflow-y-auto">
+        <div class="bg-[#0f1c2e] border-2 border-pink-500/50 rounded-[14px] p-6 w-[680px] max-w-full my-12 shadow-[0_0_30px_rgba(236,72,153,0.3)]">
+
+            <!-- Modal Header -->
+            <div class="flex justify-between items-center border-b border-[#1e3050] pb-4 mb-5">
+                <div>
+                    <h2 class="text-xl font-bold text-pink-400 flex items-center gap-2">🔮 전설 조합 연성소</h2>
+                    <p class="text-xs text-[#5a7090] mt-1">필드의 타워들을 정교하게 융합해 최강의 전설 기어 타워를 연성합니다.</p>
+                </div>
+                <button onclick="gm.closeRecipeModal()" class="text-[#5a7090] hover:text-white font-bold text-xl transition">&times;</button>
+            </div>
+
+            <!-- Formula Display Grid -->
+            <div class="grid grid-cols-1 md:grid-cols-5 items-center gap-4 bg-[#0a1520] border border-[#1e3050] rounded-[10px] p-4">
+
+                <!-- Materials Column (Left 2 columns) -->
+                <div class="md:col-span-2 flex flex-col gap-3.5" id="rec-modal-materials">
+                    <!-- Dynamically rendered materials with cute icons & required levels -->
+                </div>
+
+                <!-- Arrow Animation Divider (Middle 1 column) -->
+                <div class="flex flex-col items-center justify-center text-pink-500 font-extrabold text-2xl py-2">
+                    <span class="animate-bounce">➔</span>
+                    <span class="text-[10px] text-[#4a7a9a] font-normal tracking-wider mt-1">FUSION</span>
+                </div>
+
+                <!-- Result Column (Right 2 columns) -->
+                <div class="md:col-span-2 bg-[#0d1a2a] border border-pink-500/20 rounded-[10px] p-4 flex flex-col items-center text-center gap-2.5">
+                    <span class="text-[10px] font-bold text-pink-400 bg-pink-950/40 px-3 py-1 rounded-full border border-pink-800">연성 완료 항목</span>
+
+                    <!-- Spinning SVG Rainbow Gear (Crafted visually with SVG stroke-dasharray) -->
+                    <div class="w-16 h-16 flex items-center justify-center my-1.5">
+                        <svg class="w-16 h-16 gear-spin-anim" viewBox="0 0 100 100">
+                            <defs>
+                                <linearGradient id="rainbowGradModal" x1="0%" y1="0%" x2="100%" y2="100%">
+                                    <stop offset="0%" stop-color="#ff007f" />
+                                    <stop offset="50%" stop-color="#7f00ff" />
+                                    <stop offset="100%" stop-color="#00f0ff" />
+                                </linearGradient>
+                            </defs>
+                            <circle cx="50" cy="50" r="30" fill="none" stroke="url(#rainbowGradModal)" stroke-width="12" stroke-dasharray="10 6" />
+                            <circle cx="50" cy="50" r="18" fill="none" stroke="url(#rainbowGradModal)" stroke-width="6" />
+                            <circle cx="50" cy="50" r="6" fill="#0d1a2a" />
+                        </svg>
+                    </div>
+
+                    <h4 class="font-bold text-sm text-white">⚙️ 전설 기어 타워</h4>
+                    <p class="text-[11px] text-[#5a7a9a] leading-relaxed">탄환 적중 시, 치명적인 무지개색 연쇄 폭파 파동을 연계로 펼쳐 적 부대를 소멸시킵니다.</p>
+                </div>
+            </div>
+
+            <!-- Action Panel with Big Pulse COMBINE button instead of Upgrade -->
+            <div class="mt-6 flex flex-col gap-2.5">
+                <button id="modal-combine-btn" onclick="gm.fuseLegendary()" class="w-full py-3.5 rounded-[10px] text-white font-bold text-sm bg-gradient-to-r from-pink-600 to-purple-600 hover:from-pink-500 hover:to-purple-500 transition shadow-[0_4px_15px_rgba(236,72,153,0.3)] duration-200">
+                    🔮 전설 조합 연성 실행
+                </button>
+                <button onclick="gm.closeRecipeModal()" class="w-full py-2.5 rounded-[10px] border border-[#2a4a6a] bg-[#162033] hover:bg-[#1e3050] text-[#7eb8f7] font-bold text-xs transition">
+                    조합소 나가기
+                </button>
+            </div>
+
+        </div>
+    </div>
+
+    <script type="module" src="src/js/main.js"></script>
+</body>
+</html>
