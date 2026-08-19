@@ -1,7 +1,7 @@
 import {
   CW, CH, PW, PATH, GRID_X, GRID_Y, CELL, COLS, ROWS, MAX_ENEMIES,
   BOSS_EVERY, BOSS_LIMIT, WAVE_ENEMIES, INTER_DELAY, SUMMON_COST_INIT,
-  SHAPES, RARITY, TDEFS, rollShape, ctx,
+  GOLD_DMG_RATE, SHAPES, RARITY, TDEFS, rollShape, canvas, ctx,
 } from './config.js';
 import { Enemy, Tower } from './entities.js';
 
