@@ -285,6 +285,7 @@ class GameManager {
     document.getElementById('upg-modal').classList.add('show');
     this._upgHash='';
     this.renderUpgrade(true);
+    this.log('🧪 연구소가 열려 있어도 전투는 계속 진행됩니다.');
   }
   closeUpgrade(){
     this.upgradeOpen=false;
