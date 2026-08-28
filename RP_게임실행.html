@@ -51,6 +51,90 @@
             text-shadow: 0 0 10px rgba(126,184,247,0.3)
         }
 
+        /* ── 오프닝 스토리: 외부 CSS 없이도 표시 ── */
+        #story-modal {
+            position: fixed;
+            inset: 0;
+            z-index: 200;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 16px;
+            overflow-y: auto;
+            background: #060b13;
+        }
+
+        #story-modal > div {
+            position: relative;
+            width: 100%;
+            max-width: 620px;
+            padding: 32px;
+            border: 2px solid #1e2d47;
+            border-radius: 16px;
+            background: #0b1420;
+            box-shadow: 0 20px 50px rgba(0,0,0,.8);
+            text-align: center;
+        }
+
+        #story-title {
+            margin: 24px 0 12px;
+            color: #f1f5f9;
+            font-size: 24px;
+            font-weight: 800;
+            line-height: 1.4;
+        }
+
+        #story-desc {
+            min-height: 140px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 12px 16px;
+            color: #8aaabb;
+            font-size: 14px;
+            line-height: 1.75;
+            white-space: pre-wrap;
+        }
+
+        #story-visual {
+            width: 64px;
+            height: 64px;
+            margin: 12px auto 22px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 1px solid #1e3050;
+            border-radius: 12px;
+            background: #070c14;
+            font-size: 30px;
+        }
+
+        #story-next-btn {
+            min-height: 44px;
+            border: 0;
+            cursor: pointer;
+        }
+
+        .story-actions {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            padding-top: 20px;
+            border-top: 1px solid rgba(30,48,80,.5);
+        }
+
+        #story-skip-btn {
+            min-height: 44px;
+            padding: 8px;
+            border: 0;
+            background: transparent;
+            color: #5a7090;
+            font-size: 12px;
+            font-weight: 700;
+            cursor: pointer;
+        }
+
         /* ── 보스 바 ── */
         #boss-wrap {
             width: 100%;
@@ -783,6 +867,41 @@
                 letter-spacing: 2px
             }
 
+            #story-modal {
+                align-items: flex-start;
+                padding: 10px
+            }
+
+            #story-modal > div {
+                margin: auto 0;
+                padding: 20px 14px;
+                max-height: calc(100dvh - 20px);
+                overflow-y: auto
+            }
+
+            #story-title {
+                margin: 18px 0 8px;
+                font-size: 20px
+            }
+
+            #story-desc {
+                min-height: 110px;
+                padding: 8px 4px;
+                font-size: 13px;
+                line-height: 1.65
+            }
+
+            #story-visual {
+                width: 56px;
+                height: 56px;
+                margin: 8px auto 14px;
+                font-size: 26px
+            }
+
+            .story-actions {
+                padding-top: 12px
+            }
+
             #ec-bar,
             #boss-wrap {
                 padding: 6px 9px;
@@ -899,8 +1018,8 @@
                 </div>
             </div>
 
-            <div class="flex items-center justify-between border-t border-[#1e3050]/50 pt-5 mt-2">
-                <button onclick="gm.skipStory()" class="text-xs text-[#5a7090] hover:text-rose-400 font-bold transition">
+            <div class="story-actions flex items-center justify-between border-t border-[#1e3050]/50 pt-5 mt-2">
+                <button id="story-skip-btn" onclick="gm.skipStory()" class="text-xs text-[#5a7090] hover:text-rose-400 font-bold transition">
                     스킵하기 [ESC]
                 </button>
                 <button id="story-next-btn" onclick="gm.nextStory()" class="px-6 py-2.5 rounded-[8px] bg-gradient-to-r from-sky-600 to-blue-600 hover:from-sky-500 hover:to-blue-500 text-white text-xs font-bold transition shadow-[0_4px_12px_rgba(14,165,233,0.3)]">
