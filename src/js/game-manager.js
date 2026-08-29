@@ -30,7 +30,7 @@ class GameManager {
     this.banners = [];
 
     // 오프닝 스토리 관련 상태변수 초기화
-    this.storyOpen = true;
+    this.storyOpen = globalThis.rpGameStarted ? globalThis.rpSettings?.storyEnabled !== false : true;
     this.storyStep = 0;
     this.stories = [
       {
