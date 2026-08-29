@@ -40,6 +40,7 @@
 - Supabase 인증 UI와 DB 연결 반영
 - GitHub Pages 재배포 성공
 - 온라인 랭킹 UI 구현 브랜치 작업
+- 랭킹 조회용 `profiles` SELECT 권한 누락 수정
 
 ## 다음 작업
 

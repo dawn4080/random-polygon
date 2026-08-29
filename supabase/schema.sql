@@ -18,6 +18,10 @@ create table if not exists public.game_records (
 alter table public.profiles enable row level security;
 alter table public.game_records enable row level security;
 
+-- RLS 정책과 별도로 API 역할에 테이블 조회 권한이 필요하다.
+-- 랭킹은 비로그인 사용자도 볼 수 있으므로 profiles의 SELECT만 공개한다.
+grant select on table public.profiles to anon, authenticated;
+
 create policy "profiles are publicly readable"
 on public.profiles for select using (true);
 
