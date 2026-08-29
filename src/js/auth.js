@@ -20,6 +20,68 @@ function closeAuth() {
   setAuthMessage('');
 }
 
+function setRankingMessage(message, isError = false) {
+  const element = byId('ranking-message');
+  element.textContent = message;
+  element.classList.toggle('error', isError);
+}
+
+function closeRanking() {
+  byId('ranking-modal').classList.remove('show');
+}
+
+function renderRanking(rows) {
+  const list = byId('ranking-list');
+  list.replaceChildren();
+
+  rows.forEach((profile, index) => {
+    const item = document.createElement('li');
+    if (profile.user_id === currentUser?.id) item.classList.add('is-me');
+
+    const rank = document.createElement('strong');
+    rank.textContent = index < 3 ? ['🥇', '🥈', '🥉'][index] : `${index + 1}`;
+    const nickname = document.createElement('span');
+    nickname.textContent = profile.nickname || '플레이어';
+    const score = document.createElement('b');
+    score.textContent = (profile.best_score || 0).toLocaleString();
+    const wave = document.createElement('span');
+    wave.textContent = profile.best_wave || 0;
+
+    item.append(rank, nickname, score, wave);
+    list.append(item);
+  });
+}
+
+async function loadRanking() {
+  if (!supabaseClient) {
+    setRankingMessage('온라인 랭킹 서버에 연결할 수 없습니다.', true);
+    return;
+  }
+
+  setRankingMessage('랭킹을 불러오는 중...');
+  byId('ranking-refresh').disabled = true;
+  const { data, error } = await supabaseClient
+    .from('profiles')
+    .select('user_id,nickname,best_score,best_wave')
+    .order('best_score', { ascending: false })
+    .order('best_wave', { ascending: false })
+    .limit(10);
+  byId('ranking-refresh').disabled = false;
+
+  if (error) {
+    setRankingMessage(`랭킹을 불러오지 못했습니다: ${error.message}`, true);
+    return;
+  }
+
+  renderRanking(data || []);
+  setRankingMessage(data?.length ? '최신 기록입니다.' : '아직 등록된 기록이 없습니다.');
+}
+
+async function openRanking() {
+  byId('ranking-modal').classList.add('show');
+  await loadRanking();
+}
+
 async function renderAccount(user) {
   currentUser = user;
   const signedIn = Boolean(user);
@@ -102,6 +164,12 @@ async function initAuth() {
   byId('auth-logout-btn').addEventListener('click', signOut);
   byId('auth-modal').addEventListener('click', event => {
     if (event.target.id === 'auth-modal') closeAuth();
+  });
+  byId('ranking-btn').addEventListener('click', openRanking);
+  byId('ranking-close').addEventListener('click', closeRanking);
+  byId('ranking-refresh').addEventListener('click', loadRanking);
+  byId('ranking-modal').addEventListener('click', event => {
+    if (event.target.id === 'ranking-modal') closeRanking();
   });
   globalThis.addEventListener('rp:game-over', event => {
     submitGameResult(event.detail.score, event.detail.wave);

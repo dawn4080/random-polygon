@@ -34,11 +34,16 @@
             align-items: stretch
         }
 
-        #account-btn {
+        #top-actions {
             position: fixed;
             top: 10px;
             right: 10px;
             z-index: 80;
+            display: flex;
+            gap: 8px;
+        }
+
+        #account-btn, #ranking-btn {
             min-height: 40px;
             padding: 8px 12px;
             border: 1px solid #2a4a6a;
@@ -50,6 +55,8 @@
             cursor: pointer;
             box-shadow: 0 6px 20px rgba(0,0,0,.35)
         }
+
+        #ranking-btn { color: #fde68a; border-color: #7c5d20 }
 
         #auth-modal {
             position: fixed;
@@ -94,6 +101,42 @@
         .auth-records b { margin-top: 5px; color: #f5c842; font-size: 20px }
         #auth-message { min-height: 18px; margin-top: 10px; color: #4ade80; font-size: 11px; line-height: 1.5 }
         #auth-message.error { color: #f87171 }
+
+        #ranking-modal {
+            position: fixed;
+            inset: 0;
+            z-index: 220;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 16px;
+            background: rgba(3,7,18,.82)
+        }
+        #ranking-modal.show { display: flex }
+        #ranking-box {
+            position: relative;
+            width: min(560px,100%);
+            padding: 24px;
+            border: 2px solid #7c5d20;
+            border-radius: 16px;
+            background: #0f1c2e;
+            box-shadow: 0 20px 60px rgba(0,0,0,.65)
+        }
+        #ranking-box h2 { color: #fde68a; font-size: 22px }
+        .ranking-sub { margin: 6px 0 18px; color: #7890aa; font-size: 12px }
+        #ranking-close { position: absolute; top: 10px; right: 12px; border: 0; background: transparent; color: #7890aa; font-size: 26px; cursor: pointer }
+        .ranking-header, #ranking-list li { display: grid; grid-template-columns: 52px minmax(0,1fr) 100px 58px; gap: 8px; align-items: center }
+        .ranking-header { padding: 0 10px 8px; color: #5a7090; font-size: 10px; text-align: right }
+        .ranking-header span:nth-child(2) { text-align: left }
+        #ranking-list { display: grid; gap: 6px; list-style: none }
+        #ranking-list li { min-height: 42px; padding: 8px 10px; border: 1px solid #1e3050; border-radius: 8px; background: #091321; color: #8aaabb; font-size: 12px; text-align: right }
+        #ranking-list li > :nth-child(2) { overflow: hidden; color: #dbeafe; text-align: left; text-overflow: ellipsis; white-space: nowrap }
+        #ranking-list li b { color: #f5c842 }
+        #ranking-list li.is-me { border-color: #38bdf8; background: #0c2033 }
+        #ranking-message { min-height: 18px; margin-top: 12px; color: #4ade80; font-size: 11px; text-align: center }
+        #ranking-message.error { color: #f87171 }
+        #ranking-refresh { width: 100%; min-height: 42px; margin-top: 8px; border: 1px solid #2a4a6a; border-radius: 8px; background: #163052; color: #dbeafe; font-weight: 700; cursor: pointer }
+        #ranking-refresh:disabled { opacity: .5; cursor: wait }
 
         /* 좌측 게임 플레이 영역 */
         #left-panel {
@@ -921,14 +964,15 @@
                 flex-direction: column
             }
 
-            #account-btn {
+            #top-actions {
                 position: static;
                 align-self: flex-end;
                 margin-bottom: 4px
             }
 
-            #auth-modal { align-items: flex-end; padding: 0 }
-            #auth-box { max-height: 90vh; overflow-y: auto; padding: 20px 14px; border-radius: 16px 16px 0 0 }
+            #auth-modal, #ranking-modal { align-items: flex-end; padding: 0 }
+            #auth-box, #ranking-box { max-height: 90vh; overflow-y: auto; padding: 20px 14px; border-radius: 16px 16px 0 0 }
+            .ranking-header, #ranking-list li { grid-template-columns: 42px minmax(0,1fr) 78px 46px; gap: 5px }
 
             #left-panel {
                 gap: 6px
@@ -1064,9 +1108,12 @@
 </style>
 </head>
 <body>
-    <button id="account-btn" type="button" aria-label="계정 열기">
-        👤 <span id="account-label">게스트 · 로그인</span>
-    </button>
+    <div id="top-actions">
+        <button id="ranking-btn" type="button" aria-label="온라인 랭킹 열기">🏆 랭킹</button>
+        <button id="account-btn" type="button" aria-label="계정 열기">
+            👤 <span id="account-label">게스트 · 로그인</span>
+        </button>
+    </div>
 
     <div id="auth-modal" role="dialog" aria-modal="true" aria-labelledby="auth-title">
         <section id="auth-box">
@@ -1095,6 +1142,20 @@
                 <button id="auth-logout-btn" class="auth-quiet" type="button">로그아웃</button>
             </div>
             <p id="auth-message" aria-live="polite"></p>
+        </section>
+    </div>
+
+    <div id="ranking-modal" role="dialog" aria-modal="true" aria-labelledby="ranking-title">
+        <section id="ranking-box">
+            <button id="ranking-close" type="button" aria-label="닫기">&times;</button>
+            <h2 id="ranking-title">🏆 온라인 랭킹</h2>
+            <p class="ranking-sub">최고 점수를 기준으로 상위 10명을 보여줍니다.</p>
+            <div class="ranking-header" aria-hidden="true">
+                <span>순위</span><span>플레이어</span><span>점수</span><span>웨이브</span>
+            </div>
+            <ol id="ranking-list" aria-live="polite"></ol>
+            <p id="ranking-message" aria-live="polite"></p>
+            <button id="ranking-refresh" type="button">새로고침</button>
         </section>
     </div>
 
@@ -2481,6 +2542,68 @@ function closeAuth() {
   setAuthMessage('');
 }
 
+function setRankingMessage(message, isError = false) {
+  const element = byId('ranking-message');
+  element.textContent = message;
+  element.classList.toggle('error', isError);
+}
+
+function closeRanking() {
+  byId('ranking-modal').classList.remove('show');
+}
+
+function renderRanking(rows) {
+  const list = byId('ranking-list');
+  list.replaceChildren();
+
+  rows.forEach((profile, index) => {
+    const item = document.createElement('li');
+    if (profile.user_id === currentUser?.id) item.classList.add('is-me');
+
+    const rank = document.createElement('strong');
+    rank.textContent = index < 3 ? ['🥇', '🥈', '🥉'][index] : `${index + 1}`;
+    const nickname = document.createElement('span');
+    nickname.textContent = profile.nickname || '플레이어';
+    const score = document.createElement('b');
+    score.textContent = (profile.best_score || 0).toLocaleString();
+    const wave = document.createElement('span');
+    wave.textContent = profile.best_wave || 0;
+
+    item.append(rank, nickname, score, wave);
+    list.append(item);
+  });
+}
+
+async function loadRanking() {
+  if (!supabaseClient) {
+    setRankingMessage('온라인 랭킹 서버에 연결할 수 없습니다.', true);
+    return;
+  }
+
+  setRankingMessage('랭킹을 불러오는 중...');
+  byId('ranking-refresh').disabled = true;
+  const { data, error } = await supabaseClient
+    .from('profiles')
+    .select('user_id,nickname,best_score,best_wave')
+    .order('best_score', { ascending: false })
+    .order('best_wave', { ascending: false })
+    .limit(10);
+  byId('ranking-refresh').disabled = false;
+
+  if (error) {
+    setRankingMessage(`랭킹을 불러오지 못했습니다: ${error.message}`, true);
+    return;
+  }
+
+  renderRanking(data || []);
+  setRankingMessage(data?.length ? '최신 기록입니다.' : '아직 등록된 기록이 없습니다.');
+}
+
+async function openRanking() {
+  byId('ranking-modal').classList.add('show');
+  await loadRanking();
+}
+
 async function renderAccount(user) {
   currentUser = user;
   const signedIn = Boolean(user);
@@ -2563,6 +2686,12 @@ async function initAuth() {
   byId('auth-logout-btn').addEventListener('click', signOut);
   byId('auth-modal').addEventListener('click', event => {
     if (event.target.id === 'auth-modal') closeAuth();
+  });
+  byId('ranking-btn').addEventListener('click', openRanking);
+  byId('ranking-close').addEventListener('click', closeRanking);
+  byId('ranking-refresh').addEventListener('click', loadRanking);
+  byId('ranking-modal').addEventListener('click', event => {
+    if (event.target.id === 'ranking-modal') closeRanking();
   });
   globalThis.addEventListener('rp:game-over', event => {
     submitGameResult(event.detail.score, event.detail.wave);
