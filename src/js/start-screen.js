@@ -27,6 +27,7 @@ export function bindStartScreen(gm, { openAuth, openRanking }) {
   const openSettings = () => {
     byId('setting-story').checked = settings.storyEnabled;
     byId('setting-reduced-motion').checked = settings.reducedMotion;
+    byId('settings-quit').hidden = !globalThis.rpGameStarted;
     byId('settings-modal').classList.add('show');
   };
   const closeSettings = () => byId('settings-modal').classList.remove('show');
@@ -53,8 +54,16 @@ export function bindStartScreen(gm, { openAuth, openRanking }) {
   byId('start-login-btn').addEventListener('click', openAuth);
   byId('start-ranking-btn').addEventListener('click', openRanking);
   byId('start-settings-btn').addEventListener('click', openSettings);
+  byId('game-settings-btn').addEventListener('click', openSettings);
   byId('settings-close').addEventListener('click', closeSettings);
   byId('settings-done').addEventListener('click', saveSettings);
+  byId('settings-quit').addEventListener('click', () => {
+    if (!confirm('현재 게임 진행 상황을 종료하고 시작 화면으로 돌아갈까요?')) return;
+    closeSettings();
+    globalThis.rpGameStarted = false;
+    gm.init();
+    byId('start-screen').classList.remove('hidden');
+  });
   byId('settings-modal').addEventListener('click', event => {
     if (event.target.id === 'settings-modal') closeSettings();
   });
