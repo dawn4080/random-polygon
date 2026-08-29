@@ -8,6 +8,8 @@ const scriptPaths = [
   'src/js/entities.js',
   'src/js/game-manager.js',
   'src/js/ui.js',
+  'src/js/supabase-config.js',
+  'src/js/auth.js',
   'src/js/main.js',
 ];
 
