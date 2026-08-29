@@ -9,11 +9,48 @@
     <link rel="stylesheet" href="src/css/style.css">
 </head>
 <body>
+    <div id="start-screen" role="dialog" aria-modal="true" aria-labelledby="start-title">
+        <section id="start-card">
+            <div class="start-logo" aria-hidden="true">⬡</div>
+            <p class="start-kicker">RANDOM POLYGON</p>
+            <h1 id="start-title">Shape Defense</h1>
+            <p class="start-copy">다각형 타워를 합성하고 강화해 동그라미 군단의 침공을 막아내세요.</p>
+            <div class="start-actions">
+                <button id="start-play-btn" class="start-primary" type="button">🎮 게스트로 게임 시작</button>
+                <button id="start-login-btn" type="button">👤 로그인</button>
+                <button id="start-ranking-btn" type="button">🏆 랭킹</button>
+                <button id="start-settings-btn" type="button">⚙️ 설정</button>
+            </div>
+            <p id="start-account-state">로그인하면 최고 기록이 온라인에 저장됩니다.</p>
+        </section>
+    </div>
+
     <div id="top-actions">
         <button id="ranking-btn" type="button" aria-label="온라인 랭킹 열기">🏆 랭킹</button>
         <button id="account-btn" type="button" aria-label="계정 열기">
             👤 <span id="account-label">게스트 · 로그인</span>
         </button>
+    </div>
+
+    <div id="settings-modal" role="dialog" aria-modal="true" aria-labelledby="settings-title">
+        <section id="settings-box">
+            <button id="settings-close" type="button" aria-label="닫기">&times;</button>
+            <h2 id="settings-title">⚙️ 게임 설정</h2>
+            <p class="settings-sub">설정은 이 브라우저에 자동으로 저장됩니다.</p>
+            <label class="setting-row">
+                <span><b>오프닝 스토리</b><small>게임을 시작할 때 세계관 이야기를 재생합니다.</small></span>
+                <input id="setting-story" type="checkbox" checked>
+            </label>
+            <label class="setting-row">
+                <span><b>UI 애니메이션 줄이기</b><small>버튼과 메뉴의 움직임을 최소화합니다.</small></span>
+                <input id="setting-reduced-motion" type="checkbox">
+            </label>
+            <div class="settings-guide">
+                <b>키보드 조작</b>
+                <span>S 소환 · X 판매 · A 자동합성 · G 조합소 · U 연구소 · F 배속</span>
+            </div>
+            <button id="settings-done" type="button">설정 완료</button>
+        </section>
     </div>
 
     <div id="auth-modal" role="dialog" aria-modal="true" aria-labelledby="auth-title">

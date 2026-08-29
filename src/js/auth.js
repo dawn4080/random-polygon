@@ -90,6 +90,7 @@ async function renderAccount(user) {
 
   if (!signedIn) {
     byId('account-label').textContent = '게스트 · 로그인';
+    globalThis.dispatchEvent(new CustomEvent('rp:auth-changed', { detail: { user: null, nickname: null } }));
     return;
   }
 
@@ -105,6 +106,7 @@ async function renderAccount(user) {
   byId('auth-user-name').textContent = nickname;
   byId('auth-best-score').textContent = (profile?.best_score || 0).toLocaleString();
   byId('auth-best-wave').textContent = profile?.best_wave || 0;
+  globalThis.dispatchEvent(new CustomEvent('rp:auth-changed', { detail: { user, nickname } }));
 }
 
 async function signUp() {
@@ -188,4 +190,4 @@ async function initAuth() {
   });
 }
 
-export { initAuth, submitGameResult };
+export { initAuth, submitGameResult, openAuth, openRanking };

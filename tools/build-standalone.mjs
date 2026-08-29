@@ -10,6 +10,7 @@ const scriptPaths = [
   'src/js/ui.js',
   'src/js/supabase-config.js',
   'src/js/auth.js',
+  'src/js/start-screen.js',
   'src/js/main.js',
 ];
 
