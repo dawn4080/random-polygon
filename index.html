@@ -3,11 +3,46 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width,initial-scale=1.0">
-    <title>Shape Defense (Story Update)</title>
+    <title>Random Polygon</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <link rel="stylesheet" href="src/css/style.css">
 </head>
 <body>
+    <button id="account-btn" type="button" aria-label="계정 열기">
+        👤 <span id="account-label">게스트 · 로그인</span>
+    </button>
+
+    <div id="auth-modal" role="dialog" aria-modal="true" aria-labelledby="auth-title">
+        <section id="auth-box">
+            <button id="auth-close" type="button" aria-label="닫기">&times;</button>
+            <h2 id="auth-title">RP 계정</h2>
+            <p class="auth-sub">로그인하면 최고 점수와 웨이브가 온라인에 저장됩니다.</p>
+
+            <div id="auth-guest-view">
+                <label>닉네임<input id="auth-nickname" type="text" maxlength="16" autocomplete="nickname" placeholder="2~16자"></label>
+                <label>이메일<input id="auth-email" type="email" autocomplete="email" placeholder="name@example.com"></label>
+                <label>비밀번호<input id="auth-password" type="password" minlength="8" autocomplete="current-password" placeholder="영문+숫자, 8자 이상"></label>
+                <div class="auth-actions">
+                    <button id="auth-login-btn" type="button">로그인</button>
+                    <button id="auth-signup-btn" type="button">회원가입</button>
+                </div>
+                <button id="auth-guest-btn" class="auth-quiet" type="button">게스트로 계속 플레이</button>
+            </div>
+
+            <div id="auth-user-view" hidden>
+                <strong id="auth-user-name">플레이어</strong>
+                <span id="auth-user-email"></span>
+                <div class="auth-records">
+                    <div><small>최고 점수</small><b id="auth-best-score">0</b></div>
+                    <div><small>최고 웨이브</small><b id="auth-best-wave">0</b></div>
+                </div>
+                <button id="auth-logout-btn" class="auth-quiet" type="button">로그아웃</button>
+            </div>
+            <p id="auth-message" aria-live="polite"></p>
+        </section>
+    </div>
+
     <!-- ── 오프닝 스토리 모달 ── -->
     <div id="story-modal" class="fixed inset-0 bg-[#060b13] z-[200] flex items-center justify-center p-4">
         <div class="bg-[#0b1420] border-2 border-[#1e2d47] rounded-[16px] max-w-[620px] w-full p-8 shadow-[0_20px_50px_rgba(0,0,0,0.8)] text-center flex flex-col gap-6 relative overflow-hidden">
@@ -34,8 +69,8 @@
                 </div>
             </div>
 
-            <div class="flex items-center justify-between border-t border-[#1e3050]/50 pt-5 mt-2">
-                <button onclick="gm.skipStory()" class="text-xs text-[#5a7090] hover:text-rose-400 font-bold transition">
+            <div class="story-actions flex items-center justify-between border-t border-[#1e3050]/50 pt-5 mt-2">
+                <button id="story-skip-btn" onclick="gm.skipStory()" class="text-xs text-[#5a7090] hover:text-rose-400 font-bold transition">
                     스킵하기 [ESC]
                 </button>
                 <button id="story-next-btn" onclick="gm.nextStory()" class="px-6 py-2.5 rounded-[8px] bg-gradient-to-r from-sky-600 to-blue-600 hover:from-sky-500 hover:to-blue-500 text-white text-xs font-bold transition shadow-[0_4px_12px_rgba(14,165,233,0.3)]">

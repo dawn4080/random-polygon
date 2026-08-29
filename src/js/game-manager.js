@@ -1,7 +1,7 @@
 import {
   CW, CH, PW, PATH, GRID_X, GRID_Y, CELL, COLS, ROWS, MAX_ENEMIES,
   BOSS_EVERY, BOSS_LIMIT, WAVE_ENEMIES, INTER_DELAY, SUMMON_COST_INIT,
-  SHAPES, RARITY, TDEFS, rollShape, ctx,
+  GOLD_DMG_RATE, SHAPES, RARITY, TDEFS, rollShape, canvas, ctx,
 } from './config.js';
 import { Enemy, Tower } from './entities.js';
 
@@ -285,6 +285,7 @@ class GameManager {
     document.getElementById('upg-modal').classList.add('show');
     this._upgHash='';
     this.renderUpgrade(true);
+    this.log('🧪 연구소가 열려 있어도 전투는 계속 진행됩니다.');
   }
   closeUpgrade(){
     this.upgradeOpen=false;
@@ -700,6 +701,9 @@ class GameManager {
     if(reason==='boss'){title.textContent='⏱️ 타임아웃!';title.style.color='#ff5500';sub.textContent=`60초 내에 보스를 처치하지 못했습니다.`;}
     else{title.textContent='💥 방어선 붕괴!';title.style.color='#f87171';sub.textContent=`적이 ${this.enemies.length}마리를 초과하여 기지가 점령당했습니다.`;}
     document.getElementById('overlay').classList.add('show');
+    globalThis.dispatchEvent(new CustomEvent('rp:game-over', {
+      detail: { score: this.score, wave: this.wave },
+    }));
   }
 
   draw(){

@@ -1,0 +1,2601 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1.0">
+    <title>Random Polygon</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0
+        }
+
+        body {
+            background: #080c18;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            font-family: 'Segoe UI',sans-serif;
+            color: #e0e6f0;
+            padding: 15px;
+            overflow-x: hidden
+        }
+
+        #game-container {
+            display: flex;
+            flex-direction: row;
+            gap: 16px;
+            width: 100%;
+            max-width: 1160px;
+            align-items: stretch
+        }
+
+        #account-btn {
+            position: fixed;
+            top: 10px;
+            right: 10px;
+            z-index: 80;
+            min-height: 40px;
+            padding: 8px 12px;
+            border: 1px solid #2a4a6a;
+            border-radius: 999px;
+            background: #0f1c2e;
+            color: #c8d8f0;
+            font-size: 12px;
+            font-weight: 700;
+            cursor: pointer;
+            box-shadow: 0 6px 20px rgba(0,0,0,.35)
+        }
+
+        #auth-modal {
+            position: fixed;
+            inset: 0;
+            z-index: 220;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 16px;
+            background: rgba(3,7,18,.82)
+        }
+
+        #auth-modal.show { display: flex }
+
+        #auth-box {
+            position: relative;
+            width: min(420px,100%);
+            padding: 24px;
+            border: 2px solid #2a4a6a;
+            border-radius: 16px;
+            background: #0f1c2e;
+            box-shadow: 0 20px 60px rgba(0,0,0,.65)
+        }
+
+        #auth-box h2 { color: #7eb8f7; font-size: 22px }
+        .auth-sub { margin: 6px 0 18px; color: #7890aa; font-size: 12px; line-height: 1.6 }
+        #auth-close { position: absolute; top: 10px; right: 12px; border: 0; background: transparent; color: #7890aa; font-size: 26px; cursor: pointer }
+        #auth-box label { display: block; margin: 10px 0; color: #8aaabb; font-size: 11px; font-weight: 700 }
+        #auth-box input { width: 100%; margin-top: 5px; padding: 11px 12px; border: 1px solid #2a4065; border-radius: 8px; outline: none; background: #091321; color: #e0e6f0; font: inherit }
+        #auth-box input:focus { border-color: #38bdf8 }
+        .auth-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 14px }
+        .auth-actions button, .auth-quiet { min-height: 44px; border: 1px solid #2a4a6a; border-radius: 8px; background: #163052; color: #dbeafe; font-weight: 700; cursor: pointer }
+        .auth-quiet { width: 100%; margin-top: 8px; background: #111827; color: #8aaabb }
+        #auth-user-view { text-align: center }
+        #auth-user-name, #auth-user-email { display: block }
+        #auth-user-name { color: #e0e6f0; font-size: 20px }
+        #auth-user-email { margin-top: 4px; color: #7890aa; font-size: 12px }
+        .auth-records { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin: 18px 0 }
+        .auth-records div { padding: 14px; border: 1px solid #1e3050; border-radius: 10px; background: #091321 }
+        .auth-records small, .auth-records b { display: block }
+        .auth-records small { color: #5a7090 }
+        .auth-records b { margin-top: 5px; color: #f5c842; font-size: 20px }
+        #auth-message { min-height: 18px; margin-top: 10px; color: #4ade80; font-size: 11px; line-height: 1.5 }
+        #auth-message.error { color: #f87171 }
+
+        /* 좌측 게임 플레이 영역 */
+        #left-panel {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 8px
+        }
+
+        h1 {
+            font-size: 22px;
+            font-weight: 800;
+            letter-spacing: 3px;
+            color: #7eb8f7;
+            text-transform: uppercase;
+            margin-bottom: 2px;
+            text-shadow: 0 0 10px rgba(126,184,247,0.3)
+        }
+
+        /* ── 오프닝 스토리: 외부 CSS 없이도 표시 ── */
+        #story-modal {
+            position: fixed;
+            inset: 0;
+            z-index: 200;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 16px;
+            overflow-y: auto;
+            background: #060b13;
+        }
+
+        #story-modal > div {
+            position: relative;
+            width: 100%;
+            max-width: 620px;
+            padding: 32px;
+            border: 2px solid #1e2d47;
+            border-radius: 16px;
+            background: #0b1420;
+            box-shadow: 0 20px 50px rgba(0,0,0,.8);
+            text-align: center;
+        }
+
+        #story-title {
+            margin: 24px 0 12px;
+            color: #f1f5f9;
+            font-size: 24px;
+            font-weight: 800;
+            line-height: 1.4;
+        }
+
+        #story-desc {
+            min-height: 140px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 12px 16px;
+            color: #8aaabb;
+            font-size: 14px;
+            line-height: 1.75;
+            white-space: pre-wrap;
+        }
+
+        #story-visual {
+            width: 64px;
+            height: 64px;
+            margin: 12px auto 22px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 1px solid #1e3050;
+            border-radius: 12px;
+            background: #070c14;
+            font-size: 30px;
+        }
+
+        #story-next-btn {
+            min-height: 44px;
+            border: 0;
+            cursor: pointer;
+        }
+
+        .story-actions {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            padding-top: 20px;
+            border-top: 1px solid rgba(30,48,80,.5);
+        }
+
+        #story-skip-btn {
+            min-height: 44px;
+            padding: 8px;
+            border: 0;
+            background: transparent;
+            color: #5a7090;
+            font-size: 12px;
+            font-weight: 700;
+            cursor: pointer;
+        }
+
+        /* ── 보스 바 ── */
+        #boss-wrap {
+            width: 100%;
+            background: #1a0a0a;
+            border: 1px solid #4a1a1a;
+            border-radius: 8px;
+            padding: 8px 14px;
+            display: none;
+            align-items: center;
+            gap: 10px;
+            font-size: 12px;
+            color: #f87171
+        }
+
+        #boss-outer {
+            flex: 1;
+            height: 12px;
+            background: #2a1010;
+            border-radius: 6px;
+            overflow: hidden;
+            border: 1px solid #ff444433
+        }
+
+        #boss-inner {
+            height: 100%;
+            background: linear-gradient(90deg,#ff4444,#ff9900);
+            border-radius: 6px;
+            transition: width .1s
+        }
+
+        #boss-timer {
+            font-size: 16px;
+            font-weight: 700;
+            color: #ff6644;
+            min-width: 36px;
+            text-align: right
+        }
+
+        /* ── 적 밀도 바 ── */
+        #ec-bar {
+            width: 100%;
+            background: #111827;
+            border: 1px solid #1e2d47;
+            border-radius: 8px;
+            padding: 6px 14px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 12px;
+            color: #5a7090
+        }
+
+        #ec-outer {
+            flex: 1;
+            height: 8px;
+            background: #1e2d47;
+            border-radius: 4px;
+            overflow: hidden
+        }
+
+        #ec-inner {
+            height: 100%;
+            background: #f87171;
+            border-radius: 4px;
+            transition: width .15s
+        }
+
+        /* ── 캔버스 ── */
+        #canvas-wrap {
+            position: relative;
+            width: 100%;
+            border-radius: 12px;
+            overflow: hidden;
+            border: 2px solid #1e2d47;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5)
+        }
+
+        canvas {
+            display: block;
+            width: 100%;
+            height: auto;
+            touch-action: manipulation;
+            background: #09120b
+        }
+
+        /* 하단 로그 & 안내 */
+        #log {
+            width: 100%;
+            background: #0d1420;
+            border: 1px solid #1a2535;
+            border-radius: 8px;
+            padding: 8px 14px;
+            font-size: 12px;
+            color: #708ab0;
+            height: 36px;
+            overflow: hidden;
+            display: flex;
+            align-items: center
+        }
+
+        #info {
+            width: 100%;
+            background: #111827;
+            border: 1px solid #1e2d47;
+            border-radius: 8px;
+            padding: 9px 14px;
+            font-size: 11.5px;
+            color: #5a7090;
+            line-height: 1.8
+        }
+
+            #info b {
+                color: #7eb8f7
+            }
+
+        /* 우측 대형 컨트롤 패널 영역 */
+        #right-panel {
+            width: 290px;
+            background: #111827;
+            border: 2px solid #1e2d47;
+            border-radius: 12px;
+            padding: 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3)
+        }
+
+        /* 대형 스탯 보드 */
+        .stat-board {
+            background: #0d1422;
+            border: 1px solid #1e3050;
+            border-radius: 8px;
+            padding: 12px;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px
+        }
+
+        .stat-box {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            padding: 4px 6px
+        }
+
+        .stat-lbl {
+            font-size: 11px;
+            color: #5a7090;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+            margin-bottom: 2px
+        }
+
+        .stat-v {
+            font-size: 18px;
+            font-weight: 800
+        }
+
+        .cg {
+            color: #f5c842;
+            text-shadow: 0 0 8px rgba(245,200,66,0.2)
+        }
+
+        .cw {
+            color: #7eb8f7
+        }
+
+        .ce {
+            color: #f87171
+        }
+
+        .cs {
+            color: #a78bfa
+        }
+
+        /* ── 우측 대형 컨트롤 버튼들 ── */
+        #control-btns {
+            display: flex;
+            flex-direction: column;
+            gap: 10px
+        }
+
+        .main-btn {
+            width: 100%;
+            padding: 14px 12px;
+            border-radius: 10px;
+            border: 1px solid #2a4065;
+            background: linear-gradient(135deg, #162238, #0f1826);
+            color: #e2ecf8;
+            font-size: 14px;
+            font-weight: 700;
+            cursor: pointer;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 4px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.2);
+            transition: background 0.15s, border-color 0.15s, transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+            .main-btn .sub-lbl {
+                font-size: 11px;
+                font-weight: 400;
+                color: #617d9d;
+            }
+
+            .main-btn:hover:not(:disabled) {
+                background: linear-gradient(135deg, #203354, #131e30);
+                border-color: #538bd4;
+                transform: scale(1.03);
+            }
+
+            .main-btn:active:not(:disabled) {
+                transform: scale(0.92);
+            }
+
+            .main-btn.bounce-active {
+                animation: boing 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.5);
+            }
+
+        /* 특수 버튼 색상 강조 */
+        #btn-s {
+            border-color: #f5c84244;
+            background: linear-gradient(135deg, #22201a, #141310)
+        }
+
+            #btn-s:hover:not(:disabled) {
+                border-color: #f5c842;
+                background: linear-gradient(135deg, #332f22, #1a1914)
+            }
+
+            #btn-s .sub-lbl {
+                color: #b39842
+            }
+
+        /* 판매 버튼 전용 스타일 */
+        #btn-x {
+            border-color: #f8717144;
+            background: linear-gradient(135deg, #2a1414, #180a0a);
+        }
+
+            #btn-x:hover:not(:disabled) {
+                border-color: #f87171;
+                background: linear-gradient(135deg, #3a1c1c, #240f0f);
+            }
+
+            #btn-x .sub-lbl {
+                color: #f87171;
+            }
+
+        #btn-g {
+            border: 1px dashed #ec4899;
+            background: linear-gradient(135deg, #201222, #100812);
+            color: #fbcfe8;
+        }
+
+            #btn-g:hover:not(:disabled) {
+                border-color: #ec4899;
+                background: linear-gradient(135deg, #381a3d, #1a081f);
+            }
+
+            #btn-g.ready {
+                border: 2px solid #ec4899;
+                background: linear-gradient(135deg, #4c0519, #831843);
+                color: #ffffff;
+                box-shadow: 0 0 15px rgba(236,72,153,0.5);
+                animation: pulse-border 1.5s infinite;
+            }
+
+                #btn-g.ready .sub-lbl {
+                    color: #f472b6;
+                    font-weight: bold;
+                }
+
+        @keyframes pulse-border {
+            0% {
+                box-shadow: 0 0 5px rgba(236,72,153,0.4);
+            }
+
+            50% {
+                box-shadow: 0 0 20px rgba(236,72,153,0.8);
+            }
+
+            100% {
+                box-shadow: 0 0 5px rgba(236,72,153,0.4);
+            }
+        }
+
+        #btn-a {
+            border-color: #38bdf833;
+            background: linear-gradient(135deg, #13242c, #0b141a)
+        }
+
+            #btn-a:hover:not(:disabled) {
+                border-color: #38bdf8;
+                background: linear-gradient(135deg, #1c3644, #101e26)
+            }
+
+            #btn-a .sub-lbl {
+                color: #3aa1cc
+            }
+
+        #btn-f {
+            background: #111;
+            border-color: #333;
+            padding: 10px 14px
+        }
+
+            #btn-f.speed-active {
+                background: linear-gradient(135deg, #1d1836, #100d21);
+                border-color: #a78bfa;
+                color: #c4b5fd
+            }
+
+        .main-btn:disabled {
+            opacity: .3;
+            cursor: default;
+            transform: none !important;
+            animation: none !important;
+            box-shadow: none
+        }
+
+        @keyframes boing {
+            0% {
+                transform: scale(0.92);
+            }
+
+            40% {
+                transform: scale(1.08);
+            }
+
+            70% {
+                transform: scale(0.97);
+            }
+
+            100% {
+                transform: scale(1);
+            }
+        }
+
+        @keyframes gear-spin {
+            from {
+                transform: rotate(0deg);
+            }
+
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        .gear-spin-anim {
+            animation: gear-spin 8s linear infinite;
+            transform-origin: 50% 50%;
+        }
+
+        /* 조합법 가이드 카드 */
+        .recipe-card {
+            background: #0d1420;
+            border: 1px solid #1e2d47;
+            border-radius: 8px;
+            padding: 10px;
+            margin-top: auto;
+        }
+
+        .recipe-title {
+            font-size: 11px;
+            font-weight: 700;
+            color: #a78bfa;
+            text-transform: uppercase;
+            margin-bottom: 6px;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .recipe-list {
+            font-size: 11px;
+            color: #64748b;
+            line-height: 1.6;
+        }
+
+        .recipe-item {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 2px;
+        }
+
+            .recipe-item span.ok {
+                color: #4ade80;
+                font-weight: bold;
+            }
+
+            .recipe-item span.no {
+                color: #f87171;
+            }
+
+        /* ── 툴팁 ── */
+        #tooltip {
+            position: absolute;
+            background: #0d1a2eed;
+            border: 1px solid #2a4a6a;
+            border-radius: 10px;
+            padding: 10px 14px;
+            pointer-events: none;
+            display: none;
+            z-index: 20;
+            min-width: 190px;
+            max-width: 240px;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.4)
+        }
+
+            #tooltip h3 {
+                font-size: 14px;
+                font-weight: 700;
+                margin-bottom: 6px
+            }
+
+        .tt-row {
+            font-size: 12px;
+            color: #8aaabb;
+            line-height: 1.8
+        }
+
+            .tt-row span {
+                color: #e0e6f0;
+                float: right
+            }
+
+        .tt-desc {
+            font-size: 11px;
+            color: #5a7a9a;
+            margin-top: 6px;
+            line-height: 1.5;
+            border-top: 1px solid #1e3050;
+            padding-top: 6px
+        }
+
+        /* ── 강화 모달 ── */
+        #upg-modal {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,.28);
+            z-index: 100;
+            align-items: flex-start;
+            justify-content: flex-end;
+            padding: 20px;
+            pointer-events: auto
+        }
+
+            #upg-modal.show {
+                display: flex
+            }
+
+        #upg-box {
+            background: #0f1c2e;
+            border: 2px solid #2a4a6a;
+            border-radius: 14px;
+            padding: 18px 22px;
+            width: min(520px,calc(100vw - 40px));
+            max-height: calc(100vh - 40px);
+            overflow-y: auto;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.6);
+            pointer-events: auto
+        }
+
+            #upg-box::before {
+                content: '● 전투 진행 중';
+                display: block;
+                width: fit-content;
+                margin-bottom: 8px;
+                padding: 4px 8px;
+                border: 1px solid #166534;
+                border-radius: 999px;
+                background: #052e16;
+                color: #4ade80;
+                font-size: 11px;
+                font-weight: 700
+            }
+
+            #upg-box h2 {
+                font-size: 16px;
+                font-weight: 700;
+                margin-bottom: 3px;
+                color: #7eb8f7
+            }
+
+            #upg-box .sub {
+                font-size: 11.5px;
+                color: #5a7090;
+                margin-bottom: 12px
+            }
+
+        .upg-type-section {
+            border: 1px solid #1e3050;
+            border-radius: 10px;
+            padding: 10px 12px;
+            margin-bottom: 10px;
+            background: #0a1520
+        }
+
+        .upg-type-header {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 6px;
+            padding-bottom: 6px;
+            border-bottom: 1px solid #1e3050
+        }
+
+        .upg-type-stats {
+            font-size: 11px;
+            color: #4a7a9a;
+            margin-bottom: 6px;
+            line-height: 1.7
+        }
+
+        .upg-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 8px 10px;
+            border-radius: 7px;
+            background: #0d1a2a;
+            margin-bottom: 5px;
+            gap: 10px
+        }
+
+        .upg-left {
+            flex: 1
+        }
+
+        .upg-name {
+            font-size: 13px;
+            color: #c8d8f0;
+            font-weight: 600
+        }
+
+        .upg-desc {
+            font-size: 11px;
+            color: #4a7a9a;
+            margin-top: 2px
+        }
+
+        .upg-cost {
+            font-size: 11px;
+            color: #f5c842;
+            margin-top: 2px;
+            font-weight: 600
+        }
+
+        .upg-cnt {
+            font-size: 11px;
+            color: #fbbf24;
+            float: right
+        }
+
+        .upg-btn {
+            padding: 6px 14px;
+            font-size: 12px;
+            font-weight: 700;
+            border-radius: 6px;
+            border: 1px solid #2a4a6a;
+            background: #162033;
+            color: #c8d8f0;
+            cursor: pointer;
+            transition: background 0.15s, border-color 0.15s, transform 0.2s;
+        }
+
+            .upg-btn:hover:not(:disabled) {
+                background: #1e3050;
+                border-color: #4a7aaf;
+                transform: scale(1.05)
+            }
+
+            .upg-btn:active:not(:disabled) {
+                transform: scale(0.93)
+            }
+
+            .upg-btn:disabled {
+                opacity: .3;
+                cursor: default
+            }
+
+        #upg-close {
+            margin-top: 10px;
+            width: 100%;
+            padding: 10px;
+            border-radius: 8px;
+            border: 1px solid #2a4a6a;
+            background: #162033;
+            color: #7eb8f7;
+            font-size: 13px;
+            font-weight: 700;
+            cursor: pointer
+        }
+
+            #upg-close:hover {
+                background: #1e3050
+            }
+
+        .rarity {
+            display: inline-block;
+            font-size: 10px;
+            font-weight: 700;
+            letter-spacing: .5px;
+            padding: 2px 7px;
+            border-radius: 4px;
+            margin-left: 6px;
+            vertical-align: middle
+        }
+
+        .r-common {
+            background: #1e293b;
+            color: #94a3b8;
+            border: 1px solid #475569
+        }
+
+        .r-rare {
+            background: #2e1065;
+            color: #c4b5fd;
+            border: 1px solid #7c3aed
+        }
+
+        .r-epic {
+            background: #451a03;
+            color: #fcd34d;
+            border: 1px solid #d97706
+        }
+
+        .r-legend {
+            background: #9d174d;
+            color: #fbcfe8;
+            border: 1px solid #ec4899
+        }
+
+        /* ── 오버레이 ── */
+        #overlay {
+            display: none;
+            position: absolute;
+            inset: 0;
+            background: rgba(5,10,20,.92);
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 14px;
+            z-index: 10
+        }
+
+            #overlay.show {
+                display: flex
+            }
+
+            #overlay h2 {
+                font-size: 32px;
+                font-weight: 800;
+                letter-spacing: 2px
+            }
+
+            #overlay p {
+                color: #8a9ab0;
+                font-size: 14px;
+                text-align: center;
+                max-width: 360px;
+                line-height: 1.6
+            }
+
+            #overlay button {
+                padding: 12px 32px;
+                font-size: 15px;
+                font-weight: 700;
+                border-radius: 8px;
+                border: 1px solid #4a7aaf;
+                background: #1a3050;
+                color: #c8d8f0;
+                cursor: pointer
+            }
+
+                #overlay button:hover {
+                    background: #1e3a60
+                }
+
+        /* ── 태블릿·휴대폰 대응 ── */
+        @media (max-width: 900px) {
+            body {
+                align-items: flex-start;
+                padding: 10px
+            }
+
+            #game-container {
+                max-width: 820px;
+                flex-direction: column;
+                gap: 10px
+            }
+
+            #right-panel {
+                width: 100%;
+                padding: 12px;
+                gap: 10px
+            }
+
+            #control-btns {
+                display: grid;
+                grid-template-columns: repeat(2,minmax(0,1fr));
+                gap: 8px
+            }
+
+            .main-btn {
+                min-height: 62px;
+                padding: 10px 8px
+            }
+
+            .recipe-card {
+                margin-top: 0
+            }
+        }
+
+        @media (max-width: 520px) {
+            body {
+                padding: 6px;
+                flex-direction: column
+            }
+
+            #account-btn {
+                position: static;
+                align-self: flex-end;
+                margin-bottom: 4px
+            }
+
+            #auth-modal { align-items: flex-end; padding: 0 }
+            #auth-box { max-height: 90vh; overflow-y: auto; padding: 20px 14px; border-radius: 16px 16px 0 0 }
+
+            #left-panel {
+                gap: 6px
+            }
+
+            h1 {
+                font-size: 16px;
+                letter-spacing: 2px
+            }
+
+            #story-modal {
+                align-items: flex-start;
+                padding: 10px
+            }
+
+            #story-modal > div {
+                margin: auto 0;
+                padding: 20px 14px;
+                max-height: calc(100dvh - 20px);
+                overflow-y: auto
+            }
+
+            #story-title {
+                margin: 18px 0 8px;
+                font-size: 20px
+            }
+
+            #story-desc {
+                min-height: 110px;
+                padding: 8px 4px;
+                font-size: 13px;
+                line-height: 1.65
+            }
+
+            #story-visual {
+                width: 56px;
+                height: 56px;
+                margin: 8px auto 14px;
+                font-size: 26px
+            }
+
+            .story-actions {
+                padding-top: 12px
+            }
+
+            #ec-bar,
+            #boss-wrap {
+                padding: 6px 9px;
+                gap: 7px
+            }
+
+            #canvas-wrap {
+                border-radius: 8px;
+                border-width: 1px
+            }
+
+            #log {
+                height: 32px;
+                padding: 6px 9px;
+                font-size: 11px
+            }
+
+            #info {
+                padding: 7px 9px;
+                font-size: 10.5px;
+                line-height: 1.55
+            }
+
+            #right-panel {
+                padding: 9px;
+                border-width: 1px
+            }
+
+            .stat-board {
+                grid-template-columns: repeat(4,minmax(0,1fr));
+                gap: 3px;
+                padding: 7px 4px
+            }
+
+            .stat-box {
+                align-items: center;
+                padding: 3px 1px;
+                text-align: center
+            }
+
+            .stat-lbl {
+                font-size: 9px;
+                letter-spacing: 0
+            }
+
+            .stat-v {
+                font-size: 14px
+            }
+
+            .main-btn {
+                min-height: 58px;
+                font-size: 12px
+            }
+
+            .main-btn .sub-lbl {
+                font-size: 9.5px
+            }
+
+            #upg-modal {
+                align-items: flex-end;
+                padding: 0
+            }
+
+            #upg-box {
+                width: 100%;
+                max-height: 82vh;
+                padding: 15px 12px;
+                border-radius: 14px 14px 0 0
+            }
+
+            .upg-row {
+                padding: 8px;
+                gap: 6px
+            }
+
+            .upg-btn {
+                min-width: 58px;
+                min-height: 40px;
+                padding: 6px 10px
+            }
+
+            #tooltip {
+                min-width: 160px;
+                max-width: min(220px,calc(100vw - 24px))
+            }
+        }
+
+</style>
+</head>
+<body>
+    <button id="account-btn" type="button" aria-label="계정 열기">
+        👤 <span id="account-label">게스트 · 로그인</span>
+    </button>
+
+    <div id="auth-modal" role="dialog" aria-modal="true" aria-labelledby="auth-title">
+        <section id="auth-box">
+            <button id="auth-close" type="button" aria-label="닫기">&times;</button>
+            <h2 id="auth-title">RP 계정</h2>
+            <p class="auth-sub">로그인하면 최고 점수와 웨이브가 온라인에 저장됩니다.</p>
+
+            <div id="auth-guest-view">
+                <label>닉네임<input id="auth-nickname" type="text" maxlength="16" autocomplete="nickname" placeholder="2~16자"></label>
+                <label>이메일<input id="auth-email" type="email" autocomplete="email" placeholder="name@example.com"></label>
+                <label>비밀번호<input id="auth-password" type="password" minlength="8" autocomplete="current-password" placeholder="영문+숫자, 8자 이상"></label>
+                <div class="auth-actions">
+                    <button id="auth-login-btn" type="button">로그인</button>
+                    <button id="auth-signup-btn" type="button">회원가입</button>
+                </div>
+                <button id="auth-guest-btn" class="auth-quiet" type="button">게스트로 계속 플레이</button>
+            </div>
+
+            <div id="auth-user-view" hidden>
+                <strong id="auth-user-name">플레이어</strong>
+                <span id="auth-user-email"></span>
+                <div class="auth-records">
+                    <div><small>최고 점수</small><b id="auth-best-score">0</b></div>
+                    <div><small>최고 웨이브</small><b id="auth-best-wave">0</b></div>
+                </div>
+                <button id="auth-logout-btn" class="auth-quiet" type="button">로그아웃</button>
+            </div>
+            <p id="auth-message" aria-live="polite"></p>
+        </section>
+    </div>
+
+    <!-- ── 오프닝 스토리 모달 ── -->
+    <div id="story-modal" class="fixed inset-0 bg-[#060b13] z-[200] flex items-center justify-center p-4">
+        <div class="bg-[#0b1420] border-2 border-[#1e2d47] rounded-[16px] max-w-[620px] w-full p-8 shadow-[0_20px_50px_rgba(0,0,0,0.8)] text-center flex flex-col gap-6 relative overflow-hidden">
+            <div class="absolute -right-12 -top-12 w-32 h-32 bg-sky-500/10 rounded-full blur-2xl"></div>
+            <div class="absolute -left-12 -bottom-12 w-32 h-32 bg-purple-500/10 rounded-full blur-2xl"></div>
+            
+            <div class="flex items-center justify-center gap-2 text-pink-400 font-bold tracking-widest text-xs uppercase bg-pink-950/40 border border-pink-800/50 px-4 py-1 rounded-full w-fit mx-auto">
+                ⚠️ 긴급 무전 - 역사의 순간
+            </div>
+            
+            <h2 id="story-title" class="text-2xl font-extrabold text-slate-100 tracking-tight leading-snug">
+                오래된 기하학의 행성
+            </h2>
+
+            <div class="min-h-[140px] flex items-center justify-center">
+                <p id="story-desc" class="text-sm text-[#8aaabb] leading-relaxed tracking-normal text-center whitespace-pre-wrap px-4">
+                    이야기가 로딩 중입니다...
+                </p>
+            </div>
+
+            <div class="flex justify-center gap-4 my-2">
+                <div id="story-visual" class="w-16 h-16 bg-[#070c14] border border-[#1e3050] rounded-[12px] flex items-center justify-center text-3xl shadow-inner">
+                    📐
+                </div>
+            </div>
+
+            <div class="story-actions flex items-center justify-between border-t border-[#1e3050]/50 pt-5 mt-2">
+                <button id="story-skip-btn" onclick="gm.skipStory()" class="text-xs text-[#5a7090] hover:text-rose-400 font-bold transition">
+                    스킵하기 [ESC]
+                </button>
+                <button id="story-next-btn" onclick="gm.nextStory()" class="px-6 py-2.5 rounded-[8px] bg-gradient-to-r from-sky-600 to-blue-600 hover:from-sky-500 hover:to-blue-500 text-white text-xs font-bold transition shadow-[0_4px_12px_rgba(14,165,233,0.3)]">
+                    다음 이야기 ➔
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div id="game-container">
+
+        <!-- 좌측 영역 -->
+        <div id="left-panel">
+            <h1>⬡ Shape Defense</h1>
+
+            <div id="boss-wrap">
+                <span>👹 보스 타임아웃</span>
+                <div id="boss-outer"><div id="boss-inner" style="width:100%"></div></div>
+                <span id="boss-timer">60s</span>
+            </div>
+
+            <div id="ec-bar">
+                <span>적 밀도</span>
+                <div id="ec-outer"><div id="ec-inner" style="width:0%"></div></div>
+                <span id="ec-text">0 / 100</span>
+            </div>
+
+            <div id="canvas-wrap">
+                <canvas id="c" width="820" height="620"></canvas>
+                <div id="tooltip">
+                    <h3 id="tt-name"></h3>
+                    <div id="tt-body"></div>
+                </div>
+                <div id="overlay">
+                    <h2 id="ov-title">게임 오버</h2>
+                    <p id="ov-sub"></p>
+                    <button onclick="gm.restart()">다시 시작</button>
+                </div>
+            </div>
+
+            <div id="log">오프닝 스토리 재생 중...</div>
+            <div id="info">
+                <b>[오프닝 프롤로그 추가!]</b> 다각형의 차별에 반격한 동그라미 군대의 침략 사건! 방어선을 굳건히 하십시오. <br>
+                <b>배속 시스템:</b> 1배속 ➔ 1.5배속 ➔ 2.0배속 순환 토글. 필드 최대 소환 수량 <b>20마리 제한</b>.
+            </div>
+        </div>
+
+        <!-- 우측 대형 컨트롤 패널 영역 -->
+        <div id="right-panel">
+            <div class="stat-board">
+                <div class="stat-box"><span class="stat-lbl">소지 골드</span><span class="stat-v cg" id="s-gold">150G</span></div>
+                <div class="stat-box"><span class="stat-lbl">현재 웨이브</span><span class="stat-v cw" id="s-wave">0</span></div>
+                <div class="stat-box"><span class="stat-lbl">타워 개수</span><span class="stat-v cs" id="s-towers">0 / 20</span></div>
+                <div class="stat-box"><span class="stat-lbl">획득 점수</span><span class="stat-v ce" id="s-score">0</span></div>
+            </div>
+
+            <div id="control-btns">
+                <button class="main-btn" id="btn-s" type="button" onclick="gm.triggerBtnAnim('btn-s'); gm.summonTower()">
+                    <span>🤖 타워 소환</span>
+                    <span class="sub-lbl" id="s-cost">비용: 50G [S]</span>
+                </button>
+
+                <!-- 새로 추가된 판매 버튼 -->
+                <button class="main-btn" id="btn-x" type="button" onclick="gm.triggerBtnAnim('btn-x'); gm.sellTower()" disabled>
+                    <span>💰 타워 판매</span>
+                    <span class="sub-lbl" id="x-cost">타워 선택 필요 [X]</span>
+                </button>
+
+                <button class="main-btn" id="btn-g" type="button" onclick="gm.triggerBtnAnim('btn-g'); gm.openRecipeModal()">
+                    <span>🔮 조합 연성소</span>
+                    <span class="sub-lbl">전설 조합법 [G]</span>
+                </button>
+
+                <button class="main-btn" id="btn-a" type="button" onclick="gm.triggerBtnAnim('btn-a'); gm.triggerAutoMerge()">
+                    <span>✨ 일괄 자동합성</span>
+                    <span class="sub-lbl">모든 쌍 머지 [A]</span>
+                </button>
+
+                <button class="main-btn" id="btn-u" type="button" onclick="gm.triggerBtnAnim('btn-u'); gm.upgradeOpen?gm.closeUpgrade():gm.openUpgrade()">
+                    <span>🛠️ 종류 연구/강화</span>
+                    <span class="sub-lbl">강화 연구소 열기 [U]</span>
+                </button>
+
+                <button class="main-btn" id="btn-f" type="button" onclick="gm.triggerBtnAnim('btn-f'); gm.toggleSpeed()">
+                    <span id="speed-txt">▶ 속도: 1.0×</span>
+                    <span class="sub-lbl">클릭 시 토글 [F]</span>
+                </button>
+            </div>
+
+            <!-- 조합법 가이드 UI -->
+            <div class="recipe-card">
+                <div class="recipe-title">
+                    <span>⚙️ 전설 기어 조합법</span>
+                    <span>레벨</span>
+                </div>
+                <div class="recipe-list">
+                    <div class="recipe-item" id="rec-tri"><span>▲ 삼각형 타워</span><span id="rec-tri-st" class="no">L7 미달</span></div>
+                    <div class="recipe-item" id="rec-squ"><span>■ 사각형 타워</span><span id="rec-squ-st" class="no">L7 미달</span></div>
+                    <div class="recipe-item" id="rec-star"><span>★ 별 타워</span><span id="rec-star-st" class="no">L5 미달</span></div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- 강화 모달 -->
+    <div id="upg-modal">
+        <div id="upg-box">
+            <h2>종류 강화 연구소</h2>
+            <div class="sub" id="upg-sub">현재 골드: --</div>
+            <div id="upg-body"></div>
+            <button id="upg-close" type="button" onclick="gm.closeUpgrade()">연구소 닫기 [U]</button>
+        </div>
+    </div>
+
+    <!-- ── 신규 전설 조합 연성소 모달 ── -->
+    <div id="recipe-modal" style="display:none;" class="fixed inset-0 bg-black/85 z-[100] flex items-start justify-center pt-12 px-4 overflow-y-auto">
+        <div class="bg-[#0f1c2e] border-2 border-pink-500/50 rounded-[14px] p-6 w-[680px] max-w-full my-12 shadow-[0_0_30px_rgba(236,72,153,0.3)]">
+
+            <!-- Modal Header -->
+            <div class="flex justify-between items-center border-b border-[#1e3050] pb-4 mb-5">
+                <div>
+                    <h2 class="text-xl font-bold text-pink-400 flex items-center gap-2">🔮 전설 조합 연성소</h2>
+                    <p class="text-xs text-[#5a7090] mt-1">필드의 타워들을 정교하게 융합해 최강의 전설 기어 타워를 연성합니다.</p>
+                </div>
+                <button onclick="gm.closeRecipeModal()" class="text-[#5a7090] hover:text-white font-bold text-xl transition">&times;</button>
+            </div>
+
+            <!-- Formula Display Grid -->
+            <div class="grid grid-cols-1 md:grid-cols-5 items-center gap-4 bg-[#0a1520] border border-[#1e3050] rounded-[10px] p-4">
+
+                <!-- Materials Column (Left 2 columns) -->
+                <div class="md:col-span-2 flex flex-col gap-3.5" id="rec-modal-materials">
+                    <!-- Dynamically rendered materials with cute icons & required levels -->
+                </div>
+
+                <!-- Arrow Animation Divider (Middle 1 column) -->
+                <div class="flex flex-col items-center justify-center text-pink-500 font-extrabold text-2xl py-2">
+                    <span class="animate-bounce">➔</span>
+                    <span class="text-[10px] text-[#4a7a9a] font-normal tracking-wider mt-1">FUSION</span>
+                </div>
+
+                <!-- Result Column (Right 2 columns) -->
+                <div class="md:col-span-2 bg-[#0d1a2a] border border-pink-500/20 rounded-[10px] p-4 flex flex-col items-center text-center gap-2.5">
+                    <span class="text-[10px] font-bold text-pink-400 bg-pink-950/40 px-3 py-1 rounded-full border border-pink-800">연성 완료 항목</span>
+
+                    <!-- Spinning SVG Rainbow Gear (Crafted visually with SVG stroke-dasharray) -->
+                    <div class="w-16 h-16 flex items-center justify-center my-1.5">
+                        <svg class="w-16 h-16 gear-spin-anim" viewBox="0 0 100 100">
+                            <defs>
+                                <linearGradient id="rainbowGradModal" x1="0%" y1="0%" x2="100%" y2="100%">
+                                    <stop offset="0%" stop-color="#ff007f" />
+                                    <stop offset="50%" stop-color="#7f00ff" />
+                                    <stop offset="100%" stop-color="#00f0ff" />
+                                </linearGradient>
+                            </defs>
+                            <circle cx="50" cy="50" r="30" fill="none" stroke="url(#rainbowGradModal)" stroke-width="12" stroke-dasharray="10 6" />
+                            <circle cx="50" cy="50" r="18" fill="none" stroke="url(#rainbowGradModal)" stroke-width="6" />
+                            <circle cx="50" cy="50" r="6" fill="#0d1a2a" />
+                        </svg>
+                    </div>
+
+                    <h4 class="font-bold text-sm text-white">⚙️ 전설 기어 타워</h4>
+                    <p class="text-[11px] text-[#5a7a9a] leading-relaxed">탄환 적중 시, 치명적인 무지개색 연쇄 폭파 파동을 연계로 펼쳐 적 부대를 소멸시킵니다.</p>
+                </div>
+            </div>
+
+            <!-- Action Panel with Big Pulse COMBINE button instead of Upgrade -->
+            <div class="mt-6 flex flex-col gap-2.5">
+                <button id="modal-combine-btn" onclick="gm.fuseLegendary()" class="w-full py-3.5 rounded-[10px] text-white font-bold text-sm bg-gradient-to-r from-pink-600 to-purple-600 hover:from-pink-500 hover:to-purple-500 transition shadow-[0_4px_15px_rgba(236,72,153,0.3)] duration-200">
+                    🔮 전설 조합 연성 실행
+                </button>
+                <button onclick="gm.closeRecipeModal()" class="w-full py-2.5 rounded-[10px] border border-[#2a4a6a] bg-[#162033] hover:bg-[#1e3050] text-[#7eb8f7] font-bold text-xs transition">
+                    조합소 나가기
+                </button>
+            </div>
+
+        </div>
+    </div>
+
+    <script>
+const CW=820, CH=620;
+const PW=46, PH=23;
+const PX1=36, PY1=26, PX2=784, PY2=594;
+const PATH=[{x:PX1,y:PY1},{x:PX2,y:PY1},{x:PX2,y:PY2},{x:PX1,y:PY2}];
+
+const GRID_X=PX1+PH+2;
+const GRID_Y=PY1+PH+2;
+const CELL=85, COLS=8, ROWS=6;
+
+const MAX_ENEMIES=100, BOSS_EVERY=5, BOSS_LIMIT=60, WAVE_ENEMIES=22;
+const INTER_DELAY=360;
+
+const GOLD_DMG_RATE=0.0004;
+const SUMMON_COST_INIT=50;
+
+const SHAPES=['Triangle','Square','Star','Gear'];
+
+const RARITY={
+  common:{label:'일반',cls:'r-common',color:'#94a3b8'},
+  rare:  {label:'희귀',cls:'r-rare',  color:'#a78bfa'},
+  epic:  {label:'에픽',cls:'r-epic',  color:'#fbbf24'},
+  legend:{label:'전설',cls:'r-legend',color:'#ec4899'},
+};
+const TDEFS={
+  Triangle:{
+    label:'▲ 삼각형', tag:'근접', color:'#38bdf8', rarity:'common', prob:0.58,
+    desc:'빠른 연사로 인접 적을 위협하지만 단일 피해는 평이함.',
+    atk:22, dmg:20, dmgLv:6, range:110, rangeLv:5, aoe:false,
+    upgrades:[
+      {name:'날카로운 날',   stat:'dmg',   add:8,  baseCost:35, icon:'⚔',  desc:'전체 ▲ 데미지 +8'},
+      {name:'광속 베기',     stat:'spd',   add:-2, baseCost:45, icon:'⚡', desc:'전체 ▲ 공격속도 +8%'},
+      {name:'도달 범위',     stat:'range', add:10, baseCost:30, icon:'📏', desc:'전체 ▲ 사거리 +10'},
+    ]
+  },
+  Square:{
+    label:'■ 사각형', tag:'원거리', color:'#a78bfa', rarity:'rare', prob:0.27,
+    desc:'긴 사거리의 저격으로 단일 대상에 강력한 관통 화력 선사.',
+    atk:82, dmg:50, dmgLv:15, range:265, rangeLv:13, aoe:false,
+    upgrades:[
+      {name:'관통탄',        stat:'dmg',   add:28, baseCost:55, icon:'💥', desc:'전체 ■ 데미지 +28'},
+      {name:'속사 장치',     stat:'spd',   add:-5, baseCost:65, icon:'⚡', desc:'전체 ■ 공격속도 +6%'},
+      {name:'망원 조준경',   stat:'range', add:30, baseCost:50, icon:'🔭', desc:'전체 ■ 사거리 +30'},
+    ]
+  },
+  Star:{
+    label:'★ 별',    tag:'범위', color:'#fbbf24', rarity:'epic', prob:0.15,
+    desc:'폭발 범위형 성형 탄환으로 뭉쳐 있는 적들의 밀도를 무너뜨림.',
+    atk:105, dmg:65, dmgLv:18, range:215, rangeLv:11, aoe:true, aoeR:55,
+    upgrades:[
+      {name:'메가 폭발',     stat:'aoe',   add:12, baseCost:70, icon:'💣', desc:'전체 ★ 폭발반경 +12'},
+      {name:'강화 화약',     stat:'dmg',   add:22, baseCost:60, icon:'🔥', desc:'전체 ★ 데미지 +22'},
+      {name:'속사 발사기',   stat:'spd',   add:-6, baseCost:75, icon:'⚡', desc:'전체 ★ 공격속도 +6%'},
+    ]
+  },
+  Gear:{
+    label:'⚙️ 기어',    tag:'전설', color:'#ec4899', rarity:'legend', prob:0.0,
+    desc:'무지개 빛깔의 궁극 기어 타워. 적 타격 시 치명적인 폭사 파동이 연쇄로 터지는 연계 폭발(Chain Explosion)을 일으킵니다.',
+    atk:110, dmg:220, dmgLv:50, range:240, rangeLv:20, aoe:true, aoeR:60,
+    upgrades:[
+      {name:'공간 해체',     stat:'dmg',   add:80,  baseCost:120, icon:'⚙️', desc:'전설 ⚙️ 전체 데미지 +80'},
+      {name:'기어 엔진 과부하', stat:'spd',  add:-8,  baseCost:140, icon:'⚡', desc:'전설 ⚙️ 공격속도 극대화'},
+      {name:'연쇄 도화선',   stat:'chains', add:1,   baseCost:130, icon:'🔗', desc:'연계 폭발 도포 횟수 +1'},
+    ]
+  }
+};
+
+function rollShape(){
+  const r=Math.random();let acc=0;
+  for(const k of Object.keys(TDEFS)){
+    if(k === 'Gear') continue;
+    acc+=TDEFS[k].prob;if(r<acc)return k;
+  }
+  return 'Triangle';
+}
+
+const canvas=document.getElementById('c');
+const ctx=canvas.getContext('2d');
+
+
+
+class Enemy{
+  constructor(wave,isBoss, difficultyMultiplier){
+    this.x=PATH[0].x; this.y=PATH[0].y; this.pi=0; this.isBoss=isBoss;
+
+    if(isBoss){
+      this.sz=28;
+      this.maxHp=(1300 + wave * 420 + Math.pow(wave, 1.8) * 45) * difficultyMultiplier;
+      this.spd=0.65 + wave * 0.02;
+      this.color='#ff3300';
+      this.reward=Math.floor((150 + wave * 18) * difficultyMultiplier);
+    }else{
+      this.sz=10+Math.min(wave*0.35,7);
+      this.maxHp=(40 + wave * 25 + Math.pow(wave, 1.7) * 4.5) * difficultyMultiplier;
+      this.spd=1.45 + wave * 0.05;
+      this.color=`rgb(${Math.min(255,140+wave*8)},50,50)`;
+      this.reward=Math.floor((6 + wave * 1.2) * difficultyMultiplier);
+    }
+    this.hp=this.maxHp; this.alive=true;
+  }
+  move(dt){
+    const t=PATH[this.pi],dx=t.x-this.x,dy=t.y-this.y,d=Math.hypot(dx,dy),s=this.spd*dt;
+    if(d<s+1){this.x=t.x;this.y=t.y;this.pi=(this.pi+1)%PATH.length;}
+    else{this.x+=dx/d*s;this.y+=dy/d*s;}
+  }
+  draw(){
+    const{x,y,sz,hp,maxHp,color,isBoss}=this;
+    if(isBoss){
+      ctx.beginPath();ctx.arc(x,y,sz,0,Math.PI*2);ctx.fillStyle='#2a0800';ctx.fill();
+      ctx.beginPath();ctx.arc(x,y,sz-4,0,Math.PI*2);ctx.fillStyle=color;ctx.fill();
+      ctx.beginPath();ctx.arc(x,y,sz+3,0,Math.PI*2);ctx.strokeStyle='#ff9900';ctx.lineWidth=2.5;ctx.stroke();
+      ctx.fillStyle='#fff';ctx.font='13px serif';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText('👹',x,y);
+    }else{
+      ctx.beginPath();ctx.arc(x,y,sz,0,Math.PI*2);ctx.fillStyle=color;ctx.fill();
+      ctx.strokeStyle='#ff8888';ctx.lineWidth=1;ctx.stroke();
+    }
+    const bw=Math.max(sz*2.4,26),bh=isBoss?7:4,bx=x-bw/2,by=y-sz-10;
+    ctx.fillStyle='#111';ctx.fillRect(bx,by,bw,bh);
+    const r=Math.max(0,hp/maxHp);
+    ctx.fillStyle=r>.5?'#22c55e':r>.25?'#f59e0b':'#ef4444';
+    ctx.fillRect(bx,by,bw*r,bh);
+  }
+}
+
+class ChainParticle {
+  constructor(x1, y1, x2, y2, color) {
+    this.x1 = x1; this.y1 = y1; this.x2 = x2; this.y2 = y2;
+    this.life = 15; this.maxLife = 15;
+    this.color = color;
+  }
+  draw() {
+    const p = this.life / this.maxLife;
+    ctx.save();
+    ctx.beginPath();
+    ctx.moveTo(this.x1, this.y1);
+    ctx.lineTo(this.x2, this.y2);
+    ctx.strokeStyle = this.color;
+    ctx.lineWidth = 3 * p;
+    ctx.shadowColor = this.color;
+    ctx.shadowBlur = 10;
+    ctx.stroke();
+    ctx.restore();
+    this.life--;
+  }
+}
+
+class Bullet{
+  constructor(sx,sy,target,dmg,color,aoe,aoeR,isGear, chainCount){
+    this.x=sx;this.y=sy;this.target=target;this.spd=11;
+    this.dmg=dmg;this.color=color;this.aoe=aoe;this.aoeR=aoeR||0;
+    this.active=true;this.exploding=false;this.et=0;
+    this.isGear=isGear;
+    this.chainCount=chainCount || 3;
+  }
+  move(dt,enemies,particles){
+    if(this.exploding){this.et+=dt;if(this.et>12)this.active=false;return;}
+    if(!this.target.alive){this.active=false;return;}
+    const dx=this.target.x-this.x,dy=this.target.y-this.y,d=Math.hypot(dx,dy),s=this.spd*dt;
+    if(d<s+2){
+      if(this.isGear) {
+        this.triggerChainExplosion(this.x, this.y, this.target, enemies, particles, this.chainCount);
+        this.exploding=true;
+      } else if(this.aoe){
+        enemies.forEach(e=>{if(e.alive&&Math.hypot(e.x-this.x,e.y-this.y)<this.aoeR){e.hp-=this.dmg;if(e.hp<=0)e.alive=false;}});
+        this.exploding=true;
+      }else{
+        this.target.hp-=this.dmg;if(this.target.hp<=0)this.target.alive=false;this.active=false;
+      }
+    }else{this.x+=dx/d*s;this.y+=dy/d*s;}
+  }
+
+  triggerChainExplosion(sx, sy, currentTarget, enemies, particles, chainsLeft) {
+    if (!currentTarget || chainsLeft <= 0) return;
+
+    currentTarget.hp -= this.dmg;
+    if (currentTarget.hp <= 0) currentTarget.alive = false;
+
+    for (let r = 0; r < 5; r++) {
+      const angle = Math.random() * Math.PI * 2;
+      const rx = currentTarget.x + Math.cos(angle) * 15;
+      const ry = currentTarget.y + Math.sin(angle) * 15;
+      particles.push(new ChainParticle(currentTarget.x, currentTarget.y, rx, ry, `hsl(${Math.random()*360}, 100%, 70%)`));
+    }
+
+    const aliveEnemies = enemies.filter(e => e.alive && e !== currentTarget);
+    if (aliveEnemies.length > 0) {
+      let nextTarget = aliveEnemies[0];
+      let minDist = Math.hypot(nextTarget.x - currentTarget.x, nextTarget.y - currentTarget.y);
+      for (const e of aliveEnemies) {
+        const d = Math.hypot(e.x - currentTarget.x, e.y - currentTarget.y);
+        if (d < minDist) { minDist = d; nextTarget = e; }
+      }
+
+      if (minDist < 180) {
+        particles.push(new ChainParticle(currentTarget.x, currentTarget.y, nextTarget.x, nextTarget.y, '#ec4899'));
+        setTimeout(() => {
+          this.triggerChainExplosion(currentTarget.x, currentTarget.y, nextTarget, enemies, particles, chainsLeft - 1);
+        }, 80);
+      }
+    }
+  }
+
+  draw(){
+    if(this.exploding){
+      const p=this.et/12;
+      ctx.beginPath();ctx.arc(this.x,this.y,this.aoeR*p,0,Math.PI*2);
+      ctx.fillStyle=`rgba(236, 72, 153, ${.35*(1-p)})`;ctx.fill();
+      ctx.strokeStyle=`rgba(251,191,36,${.7*(1-p)})`;ctx.lineWidth=2;ctx.stroke();return;
+    }
+
+    if(this.isGear) {
+      ctx.save();
+      ctx.translate(this.x, this.y);
+      ctx.rotate(Date.now() / 100);
+      ctx.fillStyle = `hsl(${Date.now() % 360}, 100%, 65%)`;
+      ctx.beginPath();
+      ctx.arc(0, 0, 7, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.strokeStyle='#fff';
+      ctx.lineWidth=1;
+      ctx.stroke();
+      ctx.restore();
+    } else {
+      ctx.beginPath();ctx.arc(this.x,this.y,this.aoe?6:4,0,Math.PI*2);
+      ctx.fillStyle=this.color;ctx.shadowColor=this.color;ctx.shadowBlur=6;ctx.fill();ctx.shadowBlur=0;
+    }
+  }
+}
+
+class Tower{
+  constructor(col,row,shape){
+    this.col=col;this.row=row;this.shape=shape;this.level=1;this.timer=0;
+    this.updatePos();
+  }
+  updatePos(){this.cx=GRID_X+this.col*CELL+CELL/2;this.cy=GRID_Y+this.row*CELL+CELL/2;}
+  get def(){return TDEFS[this.shape];}
+  get upg(){
+    return globalThis.gm?.typeUpg?.[this.shape] ?? {bDmg:0,bRange:0,bSpd:0,bAoe:0,bChains:0};
+  }
+  get dmg(){
+    const u=this.upg;
+    const base=this.def.dmg+(this.level-1)*this.def.dmgLv+u.bDmg;
+    const goldBonus=Math.floor((globalThis.gm?.gold ?? 0)*GOLD_DMG_RATE);
+    return base+goldBonus;
+  }
+  get range(){const u=this.upg;return this.def.range+(this.level-1)*this.def.rangeLv+u.bRange;}
+  get atk(){const u=this.upg;return Math.max(8,this.def.atk-(this.level-1)*2.5+u.bSpd);}
+  get aoeR(){const u=this.upg;return(this.def.aoeR||0)+u.bAoe;}
+  get maxChains(){
+    const u=this.upg;
+    return 3 + (u.bChains || 0);
+  }
+
+  update(enemies,bullets,dt){
+    this.timer+=dt;
+    if(this.timer<this.atk)return;
+    const ir=enemies.filter(e=>e.alive&&Math.hypot(e.x-this.cx,e.y-this.cy)<this.range);
+    if(!ir.length)return;
+    const boss=ir.find(e=>e.isBoss);
+    const tgt=boss||ir.reduce((a,b)=>b.pi*1e6+b.x+b.y>a.pi*1e6+a.x+a.y?b:a);
+
+    const isG = (this.shape === 'Gear');
+    bullets.push(new Bullet(this.cx,this.cy,tgt,this.dmg,this.def.color,this.def.aoe,this.aoeR, isG, this.maxChains));
+    this.timer=0;
+  }
+
+  _star(cx,cy,pts,r1,r2,color){
+    ctx.beginPath();
+    for(let i=0;i<pts*2;i++){const a=(i*Math.PI/pts)-Math.PI/2,r=i%2===0?r1:r2;i===0?ctx.moveTo(cx+Math.cos(a)*r,cy+Math.sin(a)*r):ctx.lineTo(cx+Math.cos(a)*r,cy+Math.sin(a)*r);}
+    ctx.closePath();ctx.fillStyle=color;ctx.fill();
+  }
+
+  _gear(cx, cy, rOuter, rInner, teeth, color) {
+    ctx.save();
+    ctx.translate(cx, cy);
+    ctx.rotate(Date.now() / 1500);
+    ctx.fillStyle = color;
+    ctx.beginPath();
+    for (let i = 0; i < teeth * 2; i++) {
+      const angle = (i * Math.PI) / teeth;
+      const r = i % 2 === 0 ? rOuter : rInner;
+      ctx.lineTo(Math.cos(angle) * r, Math.sin(angle) * r);
+    }
+    ctx.closePath();
+    ctx.fill();
+
+    ctx.beginPath();
+    ctx.arc(0, 0, rInner * 0.4, 0, Math.PI * 2);
+    ctx.fillStyle = '#061108';
+    ctx.fill();
+    ctx.restore();
+  }
+
+  draw(sel,showR){
+    const{cx,cy,level}=this,d=this.def;
+    if(showR){
+      ctx.beginPath();ctx.arc(cx,cy,this.range,0,Math.PI*2);
+      ctx.fillStyle=d.color+'12';ctx.fill();ctx.strokeStyle=d.color+'44';ctx.lineWidth=1;ctx.stroke();
+    }
+    if(sel){
+      ctx.beginPath();ctx.arc(cx,cy,33,0,Math.PI*2);
+      ctx.strokeStyle='#fff8';ctx.lineWidth=2;ctx.setLineDash([4,4]);ctx.stroke();ctx.setLineDash([]);
+    }
+
+    ctx.shadowColor=d.color;ctx.shadowBlur=sel?22:8;
+    if(this.shape==='Triangle'){
+      ctx.beginPath();ctx.moveTo(cx,cy-23);ctx.lineTo(cx-20,cy+15);ctx.lineTo(cx+20,cy+15);ctx.closePath();ctx.fillStyle=d.color;ctx.fill();
+    }else if(this.shape==='Square'){
+      ctx.fillStyle=d.color;ctx.beginPath();ctx.roundRect(cx-19,cy-19,38,38,4);ctx.fill();
+    }else if(this.shape==='Star'){
+      this._star(cx,cy,5,22,10,d.color);
+    }else if(this.shape==='Gear') {
+      const rainbow = `hsl(${Date.now() % 360}, 85%, 60%)`;
+      this._gear(cx, cy, 24, 16, 8, rainbow);
+    }
+    ctx.shadowBlur=0;
+
+    ctx.fillStyle='#fff';ctx.font='bold 11px Segoe UI';ctx.textAlign='center';ctx.textBaseline='middle';
+    ctx.fillText(`L${level}`,cx,cy+30);
+  }
+}
+
+
+
+class GameManager {
+  constructor(){this.init();}
+
+  init(){
+    this.enemies=[];this.bullets=[]; this.particles=[];
+    this.grid=Array.from({length:ROWS},()=>Array(COLS).fill(null));
+    this.gold=150;this.wave=0;this.score=0;
+    this.waveActive=false;this.spawnQ=0;this.spawnAcc=0;this.spawnInterval=16;
+
+    this.speedMult=1;
+
+    this.selected=null;this.gameOver=false;
+    this.upgradeOpen=false;
+    this.recipeOpen=false;
+    this._upgHash='';
+    this.bossWave=false;this.bossAlive=false;this.bossTimeLeft=0;this.bossTimerAcc=0;
+    this.nextWaveCD=INTER_DELAY;
+    this.spawnDone=false;this.spawnDoneCD=0;
+    this.summonCost=SUMMON_COST_INIT;
+
+    this.difficultyMultiplier = 1.0;
+
+    this.banners = [];
+
+    // 오프닝 스토리 관련 상태변수 초기화
+    this.storyOpen = true;
+    this.storyStep = 0;
+    this.stories = [
+      {
+        title: "각이 지배하는 기하학의 왕국",
+        desc: "오랜 세월 동안 이 세상은 날카로운 선과 뚜렷한 모서리를 가진 '다각형'들이 지배하는 사회였습니다.\n\n삼각형 사제, 사각형 저격수, 에픽 별 마법사들은 세상을 수놓으며 번영을 누렸습니다.",
+        visual: "📐"
+      },
+      {
+        title: "주변인으로 밀려났던 '동그라미'",
+        desc: "하지만 각이 전혀 없고 완벽하게 둥글다는 이유만으로, '동그라미'들은 문명의 변두리로 내쫓겼습니다.\n\n모서리가 없어 구르기만 해야 했던 슬픈 원형 구체들은 혹독한 차별과 지배 속에 고통받아 왔습니다.",
+        visual: "🔴"
+      },
+      {
+        title: "슬픈 원형 구체들의 대반란",
+        desc: "마침내 고통을 견디다 못한 동그라미 군단이 힘을 모아 혁명을 외쳤습니다.\n\n\"우리의 둥근 매끈함을 세상에 선사하겠다!\"\n그들은 다각형의 성벽을 허물기 위해 대규모 세력 반역을 시작했습니다.",
+        visual: "👿"
+      },
+      {
+        title: "다각형들의 연합 방어군 결성",
+        desc: "사태의 심각성을 인지한 다각형 종족들은 오랜 갈등과 반목을 접어두고 힘을 합쳤습니다.\n\n가장 강력한 방벽과 신비로운 원소 융합을 연구하여 외곽 성벽에 방어 타워를 건설하기에 이릅니다.",
+        visual: "🛡️"
+      },
+      {
+        title: "기하학 방어 전쟁의 시작!",
+        desc: "침략해오는 수많은 동그라미 적들을 처치하고 골드를 획득하십시오.\n\n삼각형, 사각형, 별 타워를 전략적으로 융합해 최강의 연쇄 폭발을 일으키는 무지개색 [⚙️ 전설 기어 타워]를 연성하여 방어선을 끝까지 수호하십시오!",
+        visual: "⚙️"
+      }
+    ];
+
+    this.initTypeUpg();
+    document.getElementById('boss-wrap').style.display='none';
+    document.getElementById('overlay').classList.remove('show');
+    document.getElementById('upg-modal').classList.remove('show');
+    this.closeRecipeModal();
+    this.hideTooltip();
+    
+    // 스토리 초기화 연출 실행
+    this.renderStory();
+    this.updateUI();
+  }
+
+  // ── 스토리 관련 제어 함수 추가 ──
+  renderStory() {
+    const modal = document.getElementById('story-modal');
+    if (!this.storyOpen) {
+      modal.style.display = 'none';
+      return;
+    }
+    modal.style.display = 'flex';
+    const current = this.stories[this.storyStep];
+    document.getElementById('story-title').textContent = current.title;
+    document.getElementById('story-desc').textContent = current.desc;
+    document.getElementById('story-visual').textContent = current.visual;
+
+    const nextBtn = document.getElementById('story-next-btn');
+    if (this.storyStep === this.stories.length - 1) {
+      nextBtn.textContent = "🛡️ 기지 수호 시작!";
+      nextBtn.className = "px-6 py-2.5 rounded-[8px] bg-gradient-to-r from-emerald-600 to-green-600 hover:from-emerald-500 hover:to-green-500 text-white text-xs font-bold transition shadow-[0_4px_12px_rgba(16,185,129,0.3)]";
+    } else {
+      nextBtn.textContent = "다음 이야기 ➔";
+      nextBtn.className = "px-6 py-2.5 rounded-[8px] bg-gradient-to-r from-sky-600 to-blue-600 hover:from-sky-500 hover:to-blue-500 text-white text-xs font-bold transition shadow-[0_4px_12px_rgba(14,165,233,0.3)]";
+    }
+  }
+
+  nextStory() {
+    if (this.storyStep < this.stories.length - 1) {
+      this.storyStep++;
+      this.renderStory();
+    } else {
+      this.skipStory();
+    }
+  }
+
+  skipStory() {
+    this.storyOpen = false;
+    this.renderStory();
+    this.log('🛡️ 기하학 방어선이 구축되었습니다. 웨이브 1 대기 중!');
+    this.spawnBanner('⚔️ 방어를 준비하십시오! ⚔️', '#38bdf8');
+  }
+
+  spawnBanner(text, color) {
+    this.banners.push({
+      text: text,
+      color: color,
+      y: -30,
+      targetY: 300,
+      life: 140,
+      alpha: 1
+    });
+  }
+
+  triggerBtnAnim(id) {
+    const btn = document.getElementById(id);
+    if (!btn) return;
+    btn.classList.remove('bounce-active');
+    void btn.offsetWidth;
+    btn.classList.add('bounce-active');
+    setTimeout(() => btn.classList.remove('bounce-active'), 400);
+  }
+
+  initTypeUpg(){
+    this.typeUpg={};
+    for(const k of SHAPES) {
+      this.typeUpg[k]={counts:[0,0,0],bDmg:0,bRange:0,bSpd:0,bAoe:0, bChains: 0};
+    }
+  }
+
+  applyTypeUpg(shape,u){
+    const tu=this.typeUpg[shape];
+    if(u.stat==='dmg')tu.bDmg+=u.add;
+    else if(u.stat==='range')tu.bRange+=u.add;
+    else if(u.stat==='spd')tu.bSpd+=u.add;
+    else if(u.stat==='aoe')tu.bAoe+=u.add;
+    else if(u.stat==='chains')tu.bChains+=u.add;
+  }
+
+  openRecipeModal() {
+    this.recipeOpen = true;
+    document.getElementById('recipe-modal').style.display = 'flex';
+    this.renderRecipeModal();
+  }
+
+  closeRecipeModal() {
+    this.recipeOpen = false;
+    document.getElementById('recipe-modal').style.display = 'none';
+  }
+
+  // 조합 연성소 내부 UI 데이터 렌더링 (벡터 아이콘 및 0/1 표시)
+  renderRecipeModal() {
+    if (!this.recipeOpen) return;
+    const status = this.checkRecipe();
+    const container = document.getElementById('rec-modal-materials');
+
+    const triHTML = `
+      <div class="flex items-center gap-3.5 p-3 rounded-[8px] border ${status.tri ? 'border-sky-500/40 bg-sky-950/20' : 'border-[#1e3050] bg-[#0c131c]'}" style="transition: all 0.2s">
+        <div class="w-10 h-10 flex items-center justify-center bg-[#111827] rounded-[6px] border border-[#1e3050]">
+          <svg width="22" height="22" viewBox="0 0 40 40">
+            <polygon points="20,6 6,34 34,34" fill="#38bdf8" />
+          </svg>
+        </div>
+        <div class="flex-1">
+          <div class="text-xs font-bold text-white flex items-center justify-between">
+            <span>▲ 삼각형 타워</span>
+            <span class="text-[10px] text-[#4a7a9a]">(Lv.7 필요)</span>
+          </div>
+          <div class="text-[11px] mt-1 font-semibold flex items-center gap-1.5 ${status.tri ? 'text-emerald-400' : 'text-rose-400'}">
+            <span>${status.tri ? '✓ 조건 충족' : '✗ 미보유'}</span>
+            <span class="text-[10px] bg-slate-900 px-1.5 py-0.5 rounded text-slate-400 font-mono">${status.tri ? '1' : '0'}/1</span>
+          </div>
+        </div>
+      </div>
+    `;
+
+    const squHTML = `
+      <div class="flex items-center gap-3.5 p-3 rounded-[8px] border ${status.squ ? 'border-purple-500/40 bg-purple-950/20' : 'border-[#1e3050] bg-[#0c131c]'}" style="transition: all 0.2s">
+        <div class="w-10 h-10 flex items-center justify-center bg-[#111827] rounded-[6px] border border-[#1e3050]">
+          <svg width="22" height="22" viewBox="0 0 40 40">
+            <rect x="6" y="6" width="28" height="28" rx="4" fill="#a78bfa" />
+          </svg>
+        </div>
+        <div class="flex-1">
+          <div class="text-xs font-bold text-white flex items-center justify-between">
+            <span>■ 사각형 타워</span>
+            <span class="text-[10px] text-[#4a7a9a]">(Lv.7 필요)</span>
+          </div>
+          <div class="text-[11px] mt-1 font-semibold flex items-center gap-1.5 ${status.squ ? 'text-emerald-400' : 'text-rose-400'}">
+            <span>${status.squ ? '✓ 조건 충족' : '✗ 미보유'}</span>
+            <span class="text-[10px] bg-slate-900 px-1.5 py-0.5 rounded text-slate-400 font-mono">${status.squ ? '1' : '0'}/1</span>
+          </div>
+        </div>
+      </div>
+    `;
+
+    const starHTML = `
+      <div class="flex items-center gap-3.5 p-3 rounded-[8px] border ${status.star ? 'border-amber-500/40 bg-amber-950/20' : 'border-[#1e3050] bg-[#0c131c]'}" style="transition: all 0.2s">
+        <div class="w-10 h-10 flex items-center justify-center bg-[#111827] rounded-[6px] border border-[#1e3050]">
+          <svg width="22" height="22" viewBox="0 0 40 40">
+            <polygon points="20,2 25,14 38,14 28,23 32,36 20,28 8,36 12,23 2,14 15,14" fill="#fbbf24" />
+          </svg>
+        </div>
+        <div class="flex-1">
+          <div class="text-xs font-bold text-white flex items-center justify-between">
+            <span>★ 별 타워</span>
+            <span class="text-[10px] text-[#4a7a9a]">(Lv.5 필요)</span>
+          </div>
+          <div class="text-[11px] mt-1 font-semibold flex items-center gap-1.5 ${status.star ? 'text-emerald-400' : 'text-rose-400'}">
+            <span>${status.star ? '✓ 조건 충족' : '✗ 미보유'}</span>
+            <span class="text-[10px] bg-slate-900 px-1.5 py-0.5 rounded text-slate-400 font-mono">${status.star ? '1' : '0'}/1</span>
+          </div>
+        </div>
+      </div>
+    `;
+
+    container.innerHTML = triHTML + squHTML + starHTML;
+
+    // 조합 실행 버튼 활성 토글
+    const combineBtn = document.getElementById('modal-combine-btn');
+    if (status.ready) {
+      combineBtn.disabled = false;
+      combineBtn.classList.remove('from-gray-700', 'to-gray-700', 'opacity-40', 'cursor-not-allowed');
+      combineBtn.classList.add('from-pink-600', 'to-purple-600', 'animate-pulse');
+      combineBtn.innerHTML = '🔮 전설 조합 연성 실행 (준비 완료!)';
+    } else {
+      combineBtn.disabled = true;
+      combineBtn.classList.add('from-gray-700', 'to-gray-700', 'opacity-40', 'cursor-not-allowed');
+      combineBtn.classList.remove('from-pink-600', 'to-purple-600', 'animate-pulse');
+      combineBtn.innerHTML = '🔮 조합 재료 부족 (필드 타워 준비 필요)';
+    }
+  }
+
+  typeStats(shape,level){
+    const d=TDEFS[shape],u=this.typeUpg[shape];
+    return{
+      dmg:d.dmg+(level-1)*d.dmgLv+u.bDmg+Math.floor(this.gold*GOLD_DMG_RATE),
+      range:d.range+(level-1)*d.rangeLv+u.bRange,
+      atk:Math.max(8,d.atk-(level-1)*2.5+u.bSpd),
+      aoeR:(d.aoeR||0)+u.bAoe
+    };
+  }
+
+  upgCost(shape,idx){
+    const cnt=this.typeUpg[shape].counts[idx];
+    return TDEFS[shape].upgrades[idx].baseCost + (cnt * 30);
+  }
+
+  restart(){this.init();}
+  log(m){document.getElementById('log').textContent=m;}
+  hideTooltip(){document.getElementById('tooltip').style.display='none';}
+
+  showTooltip(t,px,py){
+    const d=t.def,r=RARITY[d.rarity],gb=Math.floor(this.gold*GOLD_DMG_RATE);
+    document.getElementById('tt-name').innerHTML=d.label+` <span class="rarity ${r.cls}">${r.label}</span> · ${d.tag} Lv.${t.level}`;
+    document.getElementById('tt-name').style.color=d.color;
+    let html=`<div class="tt-row">데미지 <span>${t.dmg}</span></div>
+<div class="tt-row">사거리 <span>${t.range}</span></div>
+<div class="tt-row">공격속도 <span>${(60/t.atk).toFixed(1)}/초</span></div>`;
+    if (t.shape === 'Gear') {
+      html += `<div class="tt-row">연쇄 횟수 <span>${t.maxChains}회</span></div>`;
+    }
+    html+=`<div class="tt-row" style="color:#4ade80">골드 보너스 <span>+${gb}</span></div>`;
+    document.getElementById('tt-body').innerHTML=html;
+    const tip=document.getElementById('tooltip');
+    const rect=canvas.getBoundingClientRect(),sc=rect.width/CW;
+    let lx=px*sc+14,ly=py*sc-14;
+    if(lx+230>rect.width)lx=px*sc-240;
+    tip.style.left=Math.max(0,lx)+'px';tip.style.top=Math.max(0,ly)+'px';tip.style.display='block';
+  }
+
+  openUpgrade(){
+    if (this.storyOpen) return;
+    this.upgradeOpen=true;
+    document.getElementById('upg-modal').classList.add('show');
+    this._upgHash='';
+    this.renderUpgrade(true);
+    this.log('🧪 연구소가 열려 있어도 전투는 계속 진행됩니다.');
+  }
+  closeUpgrade(){
+    this.upgradeOpen=false;
+    document.getElementById('upg-modal').classList.remove('show');
+  }
+
+  renderUpgrade(force){
+    if(!this.upgradeOpen)return;
+    const hash=`${this.gold}|${JSON.stringify(this.typeUpg)}`;
+    if(!force&&hash===this._upgHash)return;
+    this._upgHash=hash;
+
+    document.getElementById('upg-sub').textContent=`현재 자금: ${this.gold}G · 종합 난이도 배율: ×${this.difficultyMultiplier.toFixed(2)}`;
+    let html='';
+    for(const shape of SHAPES){
+      const d=TDEFS[shape],r=RARITY[d.rarity],tu=this.typeUpg[shape];
+      const st=this.typeStats(shape,1);
+      html+=`<div class="upg-type-section">
+        <div class="upg-type-header">
+          <span style="font-size:14px;font-weight:700;color:${d.color}">${d.label}</span>
+          <span class="rarity ${r.cls}">${r.label}</span>
+        </div>`;
+      d.upgrades.forEach((u,i)=>{
+        const cnt=tu.counts[i],cost=this.upgCost(shape,i),can=this.gold>=cost;
+        html+=`<div class="upg-row">
+          <div class="upg-left">
+            <div class="upg-name">${u.icon} ${u.name} ${cnt>0?`<span class="upg-cnt">×${cnt}</span>`:''}</div>
+            <div class="upg-desc">${u.desc}</div>
+            <div class="upg-cost">${cost}G</div>
+          </div>
+          <button class="upg-btn" data-shape="${shape}" data-idx="${i}" ${can?'':'disabled'}>연구</button>
+        </div>`;
+      });
+      html+='</div>';
+    }
+    document.getElementById('upg-body').innerHTML=html;
+  }
+
+  buyUpg(shape,idx){
+    const cost=this.upgCost(shape,idx);
+    if(this.gold<cost)return;
+    this.gold-=cost;
+    this.typeUpg[shape].counts[idx]++;
+    this.applyTypeUpg(shape,TDEFS[shape].upgrades[idx]);
+    this.log(`⚙️ 연구 완료: ${TDEFS[shape].label} [${TDEFS[shape].upgrades[idx].name}]`);
+    this.renderUpgrade(true);
+    this.updateUI();
+  }
+
+  checkRecipe() {
+    let triFound = null, squFound = null, starFound = null;
+
+    for(let r=0; r<ROWS; r++) {
+      for(let c=0; c<COLS; c++) {
+        const t = this.grid[r][c];
+        if(!t) continue;
+        if(t.shape === 'Triangle' && t.level >= 7 && !triFound) triFound = {r, c};
+        else if(t.shape === 'Square' && t.level >= 7 && !squFound) squFound = {r, c};
+        else if(t.shape === 'Star' && t.level >= 5 && !starFound) starFound = {r, c};
+      }
+    }
+    return {
+      tri: triFound,
+      squ: squFound,
+      star: starFound,
+      ready: (triFound && squFound && starFound)
+    };
+  }
+
+  // 타워 환불 가격 계산 공식 (소환 비용 비례)
+  getRefundValue(t) {
+    if (!t) return 0;
+    if (t.shape === 'Gear') {
+      // 기어는 고급 합성의 결정체이므로 더 가치 높게 책정
+      return Math.floor(this.summonCost * 2.5);
+    }
+    // 소환 가격에 비례하여 레벨 배수 적용 (기본 50% 환불)
+    return Math.floor(this.summonCost * 0.5 * t.level);
+  }
+
+  // 타워 판매 실행
+  sellTower() {
+    if (this.gameOver) return;
+    if (this.storyOpen) return;
+    if (!this.selected) {
+      this.log('❌ 판매할 타워를 먼저 클릭하여 선택해 주세요.');
+      return;
+    }
+    const {row, col} = this.selected;
+    const t = this.grid[row][col];
+    if (!t) return;
+
+    const refund = this.getRefundValue(t);
+    this.gold += refund;
+    this.grid[row][col] = null;
+
+    this.log(`💰 타워 판매 완료: +${refund}G 획득 (Lv.${t.level} ${t.def.label})`);
+    this.selected = null;
+    this.hideTooltip();
+    this.updateUI();
+  }
+
+  updateUI(){
+    const currentTowers = this.grid.flat().filter(Boolean).length;
+    document.getElementById('s-gold').textContent=this.gold+'G';
+    document.getElementById('s-wave').textContent=this.wave;
+    document.getElementById('s-score').textContent=this.score;
+    document.getElementById('s-towers').textContent=`${currentTowers} / 20`;
+
+    const pct=Math.min(100,this.enemies.length/MAX_ENEMIES*100);
+    document.getElementById('ec-inner').style.width=pct+'%';
+    document.getElementById('ec-text').textContent=`${this.enemies.length} / ${MAX_ENEMIES}`;
+
+    document.getElementById('s-cost').textContent=`비용: ${this.summonCost}G [S]`;
+    document.getElementById('btn-s').disabled=(this.gold < this.summonCost || this.gameOver || currentTowers >= 20 || this.storyOpen);
+
+    // 판매 버튼 UI 활성화 및 판매 금액 업데이트
+    const sellBtn = document.getElementById('btn-x');
+    const sellCost = document.getElementById('x-cost');
+    if (this.selected && !this.storyOpen) {
+      const {row, col} = this.selected;
+      const t = this.grid[row][col];
+      if (t) {
+        const refund = this.getRefundValue(t);
+        sellBtn.disabled = false;
+        sellCost.textContent = `판매가: +${refund}G [X]`;
+      } else {
+        sellBtn.disabled = true;
+        sellCost.textContent = `타워 선택 필요 [X]`;
+      }
+    } else {
+      sellBtn.disabled = true;
+      sellCost.textContent = `타워 선택 필요 [X]`;
+    }
+
+    const status = this.checkRecipe();
+
+    const recTri = document.getElementById('rec-tri-st');
+    const recSqu = document.getElementById('rec-squ-st');
+    const recStar = document.getElementById('rec-star-st');
+    const gearBtn = document.getElementById('btn-g');
+
+    if (status.tri) { recTri.className = 'ok'; recTri.textContent = 'OK'; }
+    else { recTri.className = 'no'; recTri.textContent = 'L7 미달'; }
+
+    if (status.squ) { recSqu.className = 'ok'; recSqu.textContent = 'OK'; }
+    else { recSqu.className = 'no'; recSqu.textContent = 'L7 미달'; }
+
+    if (status.star) { recStar.className = 'ok'; recStar.textContent = 'OK'; }
+    else { recStar.className = 'no'; recStar.textContent = 'L5 미달'; }
+
+    if (status.ready) {
+      gearBtn.className = 'main-btn ready';
+    } else {
+      gearBtn.className = 'main-btn';
+    }
+
+    document.getElementById('speed-txt').textContent=`▶ 속도: ${this.speedMult}×`;
+    const speedBtn = document.getElementById('btn-f');
+    if(this.speedMult > 1) {
+      speedBtn.classList.add('speed-active');
+    } else {
+      speedBtn.classList.remove('speed-active');
+    }
+
+    if(this.bossWave&&this.bossAlive){
+      document.getElementById('boss-wrap').style.display='flex';
+      const boss=this.enemies.find(e=>e.isBoss&&e.alive);
+      if(boss)document.getElementById('boss-inner').style.width=(boss.hp/boss.maxHp*100).toFixed(1)+'%';
+      document.getElementById('boss-timer').textContent=Math.ceil(this.bossTimeLeft)+'s';
+    }else{document.getElementById('boss-wrap').style.display='none';}
+    if(this.upgradeOpen)this.renderUpgrade();
+    if(this.recipeOpen)this.renderRecipeModal();
+  }
+
+  toggleSpeed(){
+    if (this.storyOpen) return;
+    if (this.speedMult === 1) {
+      this.speedMult = 1.5;
+    } else if (this.speedMult === 1.5) {
+      this.speedMult = 2;
+    } else {
+      this.speedMult = 1;
+    }
+    this.log(`⏩ 배속 설정: ${this.speedMult}×`);
+    this.updateUI();
+  }
+
+  fuseLegendary() {
+    if (this.storyOpen) return;
+    const status = this.checkRecipe();
+    if (!status.ready) {
+      this.log('❌ 재료가 충족되지 않았습니다. 삼각형 L7, 사각형 L7, 별 L5이 필요합니다.');
+      return;
+    }
+
+    this.grid[status.tri.r][status.tri.c] = null;
+    this.grid[status.squ.r][status.squ.c] = null;
+    this.grid[status.star.r][status.star.c] = null;
+
+    this.grid[status.tri.r][status.tri.c] = new Tower(status.tri.c, status.tri.r, 'Gear');
+    this.score += 2000;
+
+    this.log('✨ [전설 탄생] 삼각형, 사각형, 별이 융합해 무지개색 [⚙️ 전설 기어 타워]가 출현했습니다!');
+    this.spawnBanner('⚙️ 전설 조합 성공! ⚙️', '#ec4899');
+
+    this.closeRecipeModal();
+    this.hideTooltip();
+    this.selected = null;
+    this.updateUI();
+  }
+
+  triggerAutoMerge() {
+    if (this.gameOver || this.storyOpen) return;
+    let mergedAny = false; let mergeCount = 0;
+    let searching = true;
+    while (searching) {
+      searching = false;
+      loop1:
+      for (let r1 = 0; r1 < ROWS; r1++) {
+        for (let c1 = 0; c1 < COLS; c1++) {
+          const t1 = this.grid[r1][c1]; if (!t1 || t1.shape === 'Gear') continue;
+          for (let r2 = 0; r2 < ROWS; r2++) {
+            for (let c2 = 0; c2 < COLS; c2++) {
+              if (r1 === r2 && c1 === c2) continue;
+              const t2 = this.grid[r2][c2];
+              if (t2 && t1.shape === t2.shape && t1.level === t2.level) {
+                t1.level++; this.grid[r2][c2] = null; this.score += t1.level * 60;
+                mergedAny = true; mergeCount++; searching = true; break loop1;
+              }
+            }
+          }
+        }
+      }
+    }
+    if (mergedAny) {
+      this.log(`✨ 일괄 자동 합성 완료 (${mergeCount}회 대성공)`);
+      this.hideTooltip(); this.selected = null;
+    } else {
+      this.log(`❌ 필드에 합성 가능한 쌍이 존재하지 않습니다.`);
+    }
+    this.updateUI();
+  }
+
+  summonTower(){
+    if (this.storyOpen) return;
+    const currentTowers = this.grid.flat().filter(Boolean).length;
+    if (currentTowers >= 20) {
+      this.log('❌ 필드 타워는 최대 20마리까지만 소환할 수 있습니다!');
+      return;
+    }
+    if(this.gold < this.summonCost) return;
+
+    const empty=[];
+    for(let r=0;r<ROWS;r++)for(let c=0;c<COLS;c++)if(!this.grid[r][c])empty.push({r,c});
+    if(!empty.length){this.log('격자가 전부 가득 찼습니다!');return;}
+
+    const{r,c}=empty[Math.floor(Math.random()*empty.length)];
+    const shape=rollShape();
+    this.grid[r][c]=new Tower(c,r,shape);
+    this.gold-=this.summonCost;
+
+    this.summonCost += 2;
+
+    this.log(`타워 소환 성공! (다음 소환 비용: ${this.summonCost}G)`);
+    this.updateUI();
+  }
+
+  startWave(){
+    if(this.waveActive||this.gameOver||this.storyOpen)return;
+    this.wave++;this.waveActive=true;this.spawnDone=false;this.spawnDoneCD=0;
+    this.bossWave=this.wave>0&&this.wave%BOSS_EVERY===0;this.spawnAcc=0;
+
+    if(this.bossWave){
+      this.spawnQ=0;this.spawnDone=true;
+      this.bossAlive=true;this.bossTimeLeft=BOSS_LIMIT;this.bossTimerAcc=0;
+      this.enemies.push(new Enemy(this.wave,true, this.difficultyMultiplier));
+      this.log(`👹 보스 웨이브 ${this.wave} 출현! 60초 내 저지하세요!`);
+    }else{
+      this.spawnQ=WAVE_ENEMIES;
+      this.spawnInterval=Math.max(4,16-Math.floor(this.wave*0.3));
+      this.bossAlive=false;
+      this.log(`⚔️ 웨이브 ${this.wave} 격전 시작.`);
+    }
+    this.updateUI();
+  }
+
+  handleClick(px,py){
+    if(this.gameOver || this.storyOpen)return;
+    const col=Math.floor((px-GRID_X)/CELL),row=Math.floor((py-GRID_Y)/CELL);
+    if(col<0||col>=COLS||row<0||row>=ROWS){this.selected=null;this.hideTooltip();this.updateUI();return;}
+    if(this.selected){
+      const{row:sr,col:sc}=this.selected;
+      if(sr===row&&sc===col){this.selected=null;this.hideTooltip();this.updateUI();return;}
+      const src=this.grid[sr][sc]; if(!src){this.selected=null;this.updateUI();return;}
+      const dst=this.grid[row][col];
+
+      if(dst && (src.shape === 'Gear' || dst.shape === 'Gear')) {
+        this.log('⚙️ 전설 기어 타워는 머지할 수 없습니다.');
+        this.selected=null;
+        this.updateUI();
+        return;
+      }
+
+      if(dst&&src.shape===dst.shape&&src.level===dst.level){
+        dst.level++;this.grid[sr][sc]=null;this.score+=dst.level*60;
+        this.log(`✨ 머지 성공: Lv.${dst.level}`);
+        this.showTooltip(dst,GRID_X+col*CELL+CELL/2,GRID_Y+row*CELL+CELL/2);
+      }else if(!dst){
+        src.col=col;src.row=row;src.updatePos();this.grid[row][col]=src;this.grid[sr][sc]=null;this.hideTooltip();
+      }
+      this.selected=null;
+    }else{
+      if(this.grid[row][col]){
+        this.selected={row,col};
+        this.showTooltip(this.grid[row][col],GRID_X+col*CELL+CELL/2,GRID_Y+row*CELL+CELL/2);
+      }else{this.hideTooltip();}
+    }
+    this.updateUI();
+  }
+
+  update(){
+    if(this.gameOver)return;
+    const dt=this.speedMult;
+
+    // 스토리 재생 중일 때는 시뮬레이션을 멈춥니다.
+    if (this.storyOpen) return;
+
+    if(!this.waveActive){this.nextWaveCD-=dt;if(this.nextWaveCD<=0)this.startWave();}
+
+    if(this.bossWave&&this.bossAlive){
+      this.bossTimeLeft -= (1/60) * dt;
+      if(this.bossTimeLeft<=0){this.endGame('boss');return;}
+    }
+
+    if(this.waveActive&&!this.bossWave&&!this.spawnDone){
+      this.spawnAcc+=dt;
+      if(this.spawnAcc>=this.spawnInterval){
+        this.enemies.push(new Enemy(this.wave,false, this.difficultyMultiplier));
+        this.spawnQ--;this.spawnAcc=0;
+        if(this.spawnQ<=0){
+          this.spawnDone=true;this.spawnDoneCD=INTER_DELAY;
+        }
+      }
+    }
+
+    if(this.waveActive&&!this.bossWave&&this.spawnDone){
+      this.spawnDoneCD-=dt;
+      if(this.spawnDoneCD<=0){
+        this.waveActive=false;
+        const b=Math.floor((this.wave * 25 + 50) * Math.sqrt(this.difficultyMultiplier));
+        this.gold+=b;this.score+=this.wave*100;this.nextWaveCD=0;
+        this.log(`🌟 웨이브 클리어 보상: +${b}G 획득`);
+      }
+    }
+
+    if(this.waveActive&&this.bossWave&&this.bossAlive){
+      const boss = this.enemies.find(e => e.isBoss && e.alive);
+      if(!boss || boss.hp <= 0) {
+        this.bossAlive = false;
+        this.waveActive = false;
+
+        const b=Math.floor((this.wave * 40 + 100) * this.difficultyMultiplier);
+        this.gold+=b;this.score+=this.wave*200;this.nextWaveCD=INTER_DELAY;
+
+        this.difficultyMultiplier *= 1.15;
+        this.log(`🏆 보스 격파 완료! 난이도 ×${this.difficultyMultiplier.toFixed(2)}`);
+
+        this.spawnBanner('👹 보스를 처치했습니다! 👹', '#4ade80');
+      }
+    }
+
+    for(const e of this.enemies)if(e.alive)e.move(dt);
+
+    for(let i=this.enemies.length-1;i>=0;i--){
+      const e=this.enemies[i];
+      if(!e.alive){
+        this.gold+=e.reward;this.score+=e.reward;this.enemies.splice(i,1);
+      }
+    }
+
+    if(this.enemies.length>=MAX_ENEMIES){this.endGame('overflow');return;}
+    for(let r=0;r<ROWS;r++)for(let c=0;c<COLS;c++)if(this.grid[r][c])this.grid[r][c].update(this.enemies,this.bullets,dt);
+
+    for(let i=this.bullets.length-1;i>=0;i--){
+      const b=this.bullets[i];b.move(dt,this.enemies,this.particles);if(!b.active)this.bullets.splice(i,1);
+    }
+
+    for(let i=this.particles.length-1; i>=0; i--) {
+      if(this.particles[i].life <= 0) this.particles.splice(i,1);
+    }
+
+    for(let i=this.banners.length-1; i>=0; i--) {
+      const banner = this.banners[i];
+      banner.life -= dt;
+      banner.y += (banner.targetY - banner.y) * 0.08 * dt;
+      if (banner.life < 30) {
+        banner.alpha = banner.life / 30;
+      }
+      if (banner.life <= 0) {
+        this.banners.splice(i,1);
+      }
+    }
+
+    this.updateUI();
+  }
+
+  endGame(reason){
+    this.gameOver=true;
+    this.closeUpgrade();
+    this.closeRecipeModal();
+    const title=document.getElementById('ov-title'),sub=document.getElementById('ov-sub');
+    if(reason==='boss'){title.textContent='⏱️ 타임아웃!';title.style.color='#ff5500';sub.textContent=`60초 내에 보스를 처치하지 못했습니다.`;}
+    else{title.textContent='💥 방어선 붕괴!';title.style.color='#f87171';sub.textContent=`적이 ${this.enemies.length}마리를 초과하여 기지가 점령당했습니다.`;}
+    document.getElementById('overlay').classList.add('show');
+    globalThis.dispatchEvent(new CustomEvent('rp:game-over', {
+      detail: { score: this.score, wave: this.wave },
+    }));
+  }
+
+  draw(){
+    ctx.fillStyle='#0b150d';ctx.fillRect(0,0,CW,CH);
+    this.drawPath();
+
+    for(let r=0;r<ROWS;r++)for(let c=0;c<COLS;c++){
+      const x=GRID_X+c*CELL,y=GRID_Y+r*CELL;
+      const isSel=this.selected&&this.selected.row===r&&this.selected.col===c;
+      ctx.fillStyle=isSel?'#ffffff12':'#061108';
+      ctx.strokeStyle=isSel?'#ffffff88':'#152b1b';ctx.lineWidth=isSel?2:1;
+      ctx.beginPath();ctx.roundRect(x+2,y+2,CELL-4,CELL-4,5);ctx.fill();ctx.stroke();
+    }
+    if(this.selected){
+      const{row:sr,col:sc}=this.selected,src=this.grid[sr][sc];
+      if(src)for(let r=0;r<ROWS;r++)for(let c=0;c<COLS;c++){
+        const dst=this.grid[r][c];
+        if(dst&&(r!==sr||c!==sc)&&dst.shape===src.shape&&dst.level===src.level){
+          ctx.strokeStyle='#facc1577';ctx.lineWidth=2;ctx.fillStyle='#facc150c';
+          ctx.beginPath();ctx.roundRect(GRID_X+c*CELL+2,GRID_Y+r*CELL+2,CELL-4,CELL-4,5);ctx.fill();ctx.stroke();
+        }
+      }
+    }
+    for(let r=0;r<ROWS;r++)for(let c=0;c<COLS;c++){
+      const t=this.grid[r][c];if(t){const s=this.selected&&this.selected.row===r&&this.selected.col===c;t.draw(s,s)}
+    }
+    for(const e of this.enemies)if(e.alive)e.draw();
+    for(const b of this.bullets)if(b.active)b.draw();
+    for(const p of this.particles) p.draw();
+
+    ctx.beginPath();ctx.arc(PATH[0].x,PATH[0].y,12,0,Math.PI*2);ctx.fillStyle='#4ade8022';ctx.fill();
+    ctx.strokeStyle='#4ade80';ctx.lineWidth=2;ctx.stroke();
+
+    const gcx=GRID_X+(COLS*CELL)/2,gcy=GRID_Y+(ROWS*CELL)/2;
+    if(!this.waveActive&&!this.gameOver&&!this.storyOpen){
+      const s=Math.ceil(this.nextWaveCD/60);
+      ctx.fillStyle=this.wave%5===4?'#ff8800':'#7eb8f7';ctx.font='bold 15px Segoe UI';ctx.textAlign='center';
+      ctx.fillText(`다음 웨이브 ${this.wave+1} 대기 중... (${s}초)`,gcx,gcy);
+    }
+    if(this.enemies.length>=MAX_ENEMIES*0.8){
+      ctx.fillStyle=`rgba(239,68,68,${.08+.05*Math.sin(Date.now()/150)})`;ctx.fillRect(0,0,CW,CH);
+    }
+
+    for (const banner of this.banners) {
+      ctx.save();
+      ctx.globalAlpha = banner.alpha;
+      ctx.fillStyle = 'rgba(15, 23, 42, 0.9)';
+      ctx.strokeStyle = banner.color;
+      ctx.lineWidth = 2.5;
+
+      ctx.beginPath();
+      ctx.roundRect(CW/2 - 250, banner.y - 35, 500, 70, 8);
+      ctx.fill();
+      ctx.stroke();
+
+      ctx.fillStyle = banner.color;
+      ctx.font = 'bold 24px Segoe UI';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(banner.text, CW/2, banner.y);
+      ctx.restore();
+    }
+  }
+
+  drawPath(){
+    const loop=[...PATH,PATH[0]];
+    ctx.beginPath();ctx.moveTo(loop[0].x,loop[0].y);
+    for(let i=1;i<loop.length;i++)ctx.lineTo(loop[i].x,loop[i].y);
+    ctx.strokeStyle='#142417';ctx.lineWidth=PW;ctx.lineCap='round';ctx.lineJoin='round';ctx.stroke();
+    ctx.beginPath();ctx.moveTo(loop[0].x,loop[0].y);
+    for(let i=1;i<loop.length;i++)ctx.lineTo(loop[i].x,loop[i].y);
+    ctx.strokeStyle='#0d1a10';ctx.lineWidth=PW-8;ctx.stroke();
+  }
+}
+
+
+
+function bindUi(gm, canvas) {
+  canvas.addEventListener('click',e=>{
+    const rect=canvas.getBoundingClientRect();
+    gm.handleClick((e.clientX-rect.left)*(CW/rect.width),(e.clientY-rect.top)*(CH/rect.height));
+  });
+  document.addEventListener('click',e=>{
+    if(!canvas.contains(e.target)&&!e.target.closest('.main-btn')&&!document.getElementById('upg-modal').contains(e.target)&&!document.getElementById('recipe-modal').contains(e.target))gm.hideTooltip();
+  });
+  document.getElementById('upg-modal').addEventListener('click',e=>{
+    if(e.target.id==='upg-modal')gm.closeUpgrade();
+  });
+  document.getElementById('recipe-modal').addEventListener('click',e=>{
+    if(e.target.id==='recipe-modal')gm.closeRecipeModal();
+  });
+  document.getElementById('upg-body').addEventListener('click',e=>{
+    const btn=e.target.closest('.upg-btn');
+    if(btn&&!btn.disabled){
+      gm.buyUpg(btn.dataset.shape, parseInt(btn.dataset.idx, 10));
+    }
+  });
+  
+  document.addEventListener('keydown',e=>{
+    const k=e.key.toLowerCase();
+    
+    // 스토리 오프닝 단계에서는 ESC 누르면 스킵 가능하도록 지정
+    if (gm.storyOpen) {
+      if (e.key === 'Escape') {
+        gm.skipStory();
+      }
+      return;
+    }
+  
+    if(gm.gameOver) return;
+    if(k==='s') { gm.triggerBtnAnim('btn-s'); gm.summonTower(); }
+    if(k==='g') {
+      gm.triggerBtnAnim('btn-g');
+      if(gm.recipeOpen) gm.closeRecipeModal(); else gm.openRecipeModal();
+    }
+    if(k==='a') { gm.triggerBtnAnim('btn-a'); gm.triggerAutoMerge(); }
+    if(k==='f') { gm.triggerBtnAnim('btn-f'); gm.toggleSpeed(); }
+    if(k==='u') {
+      gm.triggerBtnAnim('btn-u');
+      if(gm.upgradeOpen)gm.closeUpgrade(); else gm.openUpgrade();
+    }
+    // 키보드 X키 눌렀을 때 판매 실행
+    if(k==='x') { gm.triggerBtnAnim('btn-x'); gm.sellTower(); }
+  });
+}
+
+
+const SUPABASE_URL = 'https://vqdlexfgsmvbdmypykja.supabase.co';
+const SUPABASE_PUBLISHABLE_KEY = 'sb_publishable_aR4Uf1GmYOTyMrL-Ea3YMg_dIlptleq';
+
+
+
+let supabaseClient = null;
+let currentUser = null;
+
+const byId = id => document.getElementById(id);
+
+function setAuthMessage(message, isError = false) {
+  const element = byId('auth-message');
+  element.textContent = message;
+  element.classList.toggle('error', isError);
+}
+
+function openAuth() {
+  byId('auth-modal').classList.add('show');
+}
+
+function closeAuth() {
+  byId('auth-modal').classList.remove('show');
+  setAuthMessage('');
+}
+
+async function renderAccount(user) {
+  currentUser = user;
+  const signedIn = Boolean(user);
+  byId('auth-guest-view').hidden = signedIn;
+  byId('auth-user-view').hidden = !signedIn;
+
+  if (!signedIn) {
+    byId('account-label').textContent = '게스트 · 로그인';
+    return;
+  }
+
+  const { data: profile } = await supabaseClient
+    .from('profiles')
+    .select('nickname,best_score,best_wave')
+    .eq('user_id', user.id)
+    .maybeSingle();
+
+  const nickname = profile?.nickname || user.user_metadata?.nickname || '플레이어';
+  byId('account-label').textContent = nickname;
+  byId('auth-user-email').textContent = user.email || '';
+  byId('auth-user-name').textContent = nickname;
+  byId('auth-best-score').textContent = (profile?.best_score || 0).toLocaleString();
+  byId('auth-best-wave').textContent = profile?.best_wave || 0;
+}
+
+async function signUp() {
+  const email = byId('auth-email').value.trim();
+  const password = byId('auth-password').value;
+  const nickname = byId('auth-nickname').value.trim();
+  if (!email || password.length < 8 || !/[A-Za-z]/.test(password) || !/\d/.test(password) || nickname.length < 2) {
+    setAuthMessage('닉네임 2자 이상, 비밀번호는 영문과 숫자를 포함해 8자 이상 입력해 주세요.', true);
+    return;
+  }
+
+  setAuthMessage('회원가입 처리 중...');
+  const { error } = await supabaseClient.auth.signUp({
+    email,
+    password,
+    options: { data: { nickname } },
+  });
+  if (error) setAuthMessage(error.message, true);
+  else setAuthMessage('가입 완료! 이메일 확인이 켜져 있다면 메일의 인증 링크를 눌러 주세요.');
+}
+
+async function signIn() {
+  const email = byId('auth-email').value.trim();
+  const password = byId('auth-password').value;
+  if (!email || !password) {
+    setAuthMessage('이메일과 비밀번호를 입력해 주세요.', true);
+    return;
+  }
+
+  setAuthMessage('로그인 중...');
+  const { error } = await supabaseClient.auth.signInWithPassword({ email, password });
+  if (error) setAuthMessage(error.message, true);
+  else closeAuth();
+}
+
+async function signOut() {
+  await supabaseClient.auth.signOut();
+  closeAuth();
+}
+
+async function submitGameResult(score, wave) {
+  if (!supabaseClient || !currentUser) return;
+  const { error } = await supabaseClient.rpc('submit_game_result', {
+    p_score: Math.max(0, Math.floor(score)),
+    p_wave: Math.max(0, Math.floor(wave)),
+  });
+  if (error) console.warn('게임 기록 저장 실패:', error.message);
+  else await renderAccount(currentUser);
+}
+
+async function initAuth() {
+  byId('account-btn').addEventListener('click', openAuth);
+  byId('auth-close').addEventListener('click', closeAuth);
+  byId('auth-guest-btn').addEventListener('click', closeAuth);
+  byId('auth-login-btn').addEventListener('click', signIn);
+  byId('auth-signup-btn').addEventListener('click', signUp);
+  byId('auth-logout-btn').addEventListener('click', signOut);
+  byId('auth-modal').addEventListener('click', event => {
+    if (event.target.id === 'auth-modal') closeAuth();
+  });
+  globalThis.addEventListener('rp:game-over', event => {
+    submitGameResult(event.detail.score, event.detail.wave);
+  });
+
+  if (!globalThis.supabase?.createClient) {
+    byId('account-label').textContent = '게스트 · 연결 오류';
+    return;
+  }
+
+  supabaseClient = globalThis.supabase.createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY);
+  const { data } = await supabaseClient.auth.getSession();
+  await renderAccount(data.session?.user || null);
+  supabaseClient.auth.onAuthStateChange((_event, session) => {
+    setTimeout(() => renderAccount(session?.user || null), 0);
+  });
+}
+
+
+
+const gm = new GameManager();
+globalThis.gm = gm;
+bindUi(gm, canvas);
+initAuth();
+
+function loop() {
+  gm.update();
+  gm.draw();
+  requestAnimationFrame(loop);
+}
+
+loop();
+
+</script>
+</body>
+</html>
