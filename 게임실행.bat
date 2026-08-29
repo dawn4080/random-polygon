@@ -1,13 +1,17 @@
 @echo off
 chcp 65001 >nul
 cd /d "%~dp0"
-echo RP(Random Polygon) 실행 서버를 시작합니다.
-echo 브라우저가 열리지 않으면 http://localhost:8000 으로 접속하세요.
-start "" http://localhost:8000
-where py >nul 2>nul
-if %errorlevel%==0 (
-  py -m http.server 8000
-) else (
-  python -m http.server 8000
+echo RP(Random Polygon) React 개발 서버를 시작합니다.
+where npm >nul 2>nul
+if not %errorlevel%==0 (
+  echo Node.js와 npm을 먼저 설치해 주세요.
+  pause
+  exit /b 1
 )
+if not exist node_modules (
+  echo 필요한 패키지를 설치합니다.
+  call npm install
+)
+start "" http://localhost:5173
+call npm run dev
 pause
