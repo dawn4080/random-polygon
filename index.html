@@ -9,9 +9,12 @@
     <link rel="stylesheet" href="src/css/style.css">
 </head>
 <body>
-    <button id="account-btn" type="button" aria-label="계정 열기">
-        👤 <span id="account-label">게스트 · 로그인</span>
-    </button>
+    <div id="top-actions">
+        <button id="ranking-btn" type="button" aria-label="온라인 랭킹 열기">🏆 랭킹</button>
+        <button id="account-btn" type="button" aria-label="계정 열기">
+            👤 <span id="account-label">게스트 · 로그인</span>
+        </button>
+    </div>
 
     <div id="auth-modal" role="dialog" aria-modal="true" aria-labelledby="auth-title">
         <section id="auth-box">
@@ -40,6 +43,20 @@
                 <button id="auth-logout-btn" class="auth-quiet" type="button">로그아웃</button>
             </div>
             <p id="auth-message" aria-live="polite"></p>
+        </section>
+    </div>
+
+    <div id="ranking-modal" role="dialog" aria-modal="true" aria-labelledby="ranking-title">
+        <section id="ranking-box">
+            <button id="ranking-close" type="button" aria-label="닫기">&times;</button>
+            <h2 id="ranking-title">🏆 온라인 랭킹</h2>
+            <p class="ranking-sub">최고 점수를 기준으로 상위 10명을 보여줍니다.</p>
+            <div class="ranking-header" aria-hidden="true">
+                <span>순위</span><span>플레이어</span><span>점수</span><span>웨이브</span>
+            </div>
+            <ol id="ranking-list" aria-live="polite"></ol>
+            <p id="ranking-message" aria-live="polite"></p>
+            <button id="ranking-refresh" type="button">새로고침</button>
         </section>
     </div>
 
