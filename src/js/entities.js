@@ -138,7 +138,7 @@ class Tower{
   constructor(col,row,shape){this.col=col;this.row=row;this.shape=shape;this.level=1;this.timer=0;this.updatePos();}
   updatePos(){this.cx=GRID_X+this.col*CELL+CELL/2;this.cy=GRID_Y+this.row*CELL+CELL/2;}
   get def(){return TDEFS[this.shape];}
-  get upg(){return globalThis.gm?.typeUpg?.[this.shape]??{bDmg:0,bRange:0,bSpd:0,bAoe:0,bChains:0};}
+  get upg(){return globalThis.gm?.typeUpg?.[this.shape]??{counts:[0,0,0],bDmg:0,bRange:0,bSpd:0,bAoe:0,bChains:0};}
   get dmg(){
     const u=this.upg;
     const growth=this.def.dmgGrowth??0;
@@ -151,8 +151,16 @@ class Tower{
   get atk(){const u=this.upg;return Math.max(8,this.def.atk-(this.level-1)*2.5+u.bSpd);}
   get aoeR(){const u=this.upg;return(this.def.aoeR||0)+u.bAoe;}
   get maxChains(){const u=this.upg;return 3+(u.bChains||0);}
-  get vulnerableAmount(){return this.shape==='Square'?(this.def.vulnerable||0)+(this.level-1)*(this.def.vulnerableLv||0):0;}
-  get vulnerableDuration(){return this.shape==='Square'?(this.def.vulnerableDuration||0):0;}
+  get vulnerableAmount(){
+    if(this.shape!=='Square')return 0;
+    const research=(this.upg.counts?.[0]||0)*0.03;
+    return (this.def.vulnerable||0)+(this.level-1)*(this.def.vulnerableLv||0)+research;
+  }
+  get vulnerableDuration(){
+    if(this.shape!=='Square')return 0;
+    const research=(this.upg.counts?.[2]||0)*60;
+    return (this.def.vulnerableDuration||0)+research;
+  }
 
   update(enemies,bullets,dt){
     this.timer+=dt;if(this.timer<this.atk)return;
