@@ -34,13 +34,13 @@ const TDEFS={
   },
   Square:{
     label:'■ 사각형', tag:'원거리 지원', color:'#a78bfa', rarity:'rare', prob:0.27,
-    desc:'긴 사거리에서 적의 약점을 분석해 취약 상태를 부여하는 지원형 타워.',
+    desc:'긴 사거리에서 적을 분석하는 지원형 타워. 공격한 적에게 취약을 부여해 일정 시간 모든 타워에게 받는 피해를 증가시킵니다. 레벨이 높을수록 취약 효과가 강해집니다.',
     atk:82, dmg:50, dmgGrowth:0.22, range:265, rangeLv:13, aoe:false,
     vulnerable:0.10, vulnerableLv:0.02, vulnerableDuration:180,
     upgrades:[
-      {name:'약점 사격',     stat:'dmg',   add:28, baseCost:55, icon:'🎯', desc:'전체 ■ 데미지 +28'},
-      {name:'분석 가속',     stat:'spd',   add:-5, baseCost:65, icon:'⚡', desc:'전체 ■ 공격속도 증가'},
-      {name:'망원 분석경',   stat:'range', add:30, baseCost:50, icon:'🔭', desc:'전체 ■ 사거리 +30'},
+      {name:'약점 분석',     stat:'vulnerable',         add:0.03, baseCost:55, icon:'🎯', desc:'전체 ■ 취약 효과 +3%p'},
+      {name:'분석 가속',     stat:'spd',                add:-5,   baseCost:65, icon:'⚡', desc:'전체 ■ 공격속도 증가'},
+      {name:'정밀 분석',     stat:'vulnerableDuration', add:60,   baseCost:50, icon:'🔬', desc:'전체 ■ 취약 지속시간 +1초'},
     ]
   },
   Star:{
