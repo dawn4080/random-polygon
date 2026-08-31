@@ -1,7 +1,7 @@
 import {
   CW, CH, PW, PATH, GRID_X, GRID_Y, CELL, COLS, ROWS, MAX_ENEMIES,
-  BOSS_EVERY, BOSS_LIMIT, WAVE_ENEMIES, INTER_DELAY, SUMMON_COST_INIT,
-  GOLD_DMG_RATE, SHAPES, RARITY, TDEFS, rollShape, canvas, ctx,
+  BOSS_EVERY, BOSS_LIMIT, INTER_DELAY, SUMMON_COST_INIT,
+  GOLD_DMG_RATE, SHAPES, RARITY, TDEFS, getWaveEnemyCount, rollShape, canvas, ctx,
 } from './config.js';
 import { Enemy, Tower } from './entities.js';
 
@@ -11,7 +11,7 @@ class GameManager {
   init(){
     this.enemies=[];this.bullets=[]; this.particles=[];
     this.grid=Array.from({length:ROWS},()=>Array(COLS).fill(null));
-    this.gold=150;this.wave=0;this.score=0;
+    this.gold=160;this.wave=0;this.score=0;
     this.waveActive=false;this.spawnQ=0;this.spawnAcc=0;this.spawnInterval=16;
 
     this.speedMult=1;
@@ -253,7 +253,8 @@ class GameManager {
 
   upgCost(shape,idx){
     const cnt=this.typeUpg[shape].counts[idx];
-    return TDEFS[shape].upgrades[idx].baseCost + (cnt * 30);
+    const def=TDEFS[shape];
+    return def.upgrades[idx].baseCost + (cnt * def.upgradeCostGrowth);
   }
 
   restart(){this.init();}
@@ -565,7 +566,7 @@ class GameManager {
       this.enemies.push(new Enemy(this.wave,true, this.difficultyMultiplier));
       this.log(`👹 보스 웨이브 ${this.wave} 출현! 60초 내 저지하세요!`);
     }else{
-      this.spawnQ=WAVE_ENEMIES;
+      this.spawnQ=getWaveEnemyCount(this.wave);
       this.spawnInterval=Math.max(4,16-Math.floor(this.wave*0.3));
       this.bossAlive=false;
       this.log(`⚔️ 웨이브 ${this.wave} 격전 시작.`);
@@ -648,10 +649,10 @@ class GameManager {
         this.bossAlive = false;
         this.waveActive = false;
 
-        const b=Math.floor((this.wave * 40 + 100) * this.difficultyMultiplier);
+        const b=Math.floor((this.wave * 40 + 100) * Math.sqrt(this.difficultyMultiplier));
         this.gold+=b;this.score+=this.wave*200;this.nextWaveCD=INTER_DELAY;
 
-        this.difficultyMultiplier *= 1.15;
+        this.difficultyMultiplier *= 1.10;
         this.log(`🏆 보스 격파 완료! 난이도 ×${this.difficultyMultiplier.toFixed(2)}`);
 
         this.spawnBanner('👹 보스를 처치했습니다! 👹', '#4ade80');
