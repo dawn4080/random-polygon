@@ -5,11 +5,14 @@
 ## 핵심 정보
 
 - 프로젝트: RP (Random Polygon) React+Vite UI + JavaScript Canvas 타워 디펜스
-- 서비스: https://dawn4080.github.io/random-polygon/
-- 배포 전환 중: GitHub Pages 운영본을 유지하면서 Cloudflare Workers 미리보기 검증 후 이전
+- 운영 서비스: https://random-polygon.dawn01542.workers.dev
+- 배포: `main` 병합 시 Cloudflare Workers 자동 빌드·배포
+- 미리보기: 비운영 브랜치마다 Cloudflare Preview URL 생성
 - 인증·저장: Supabase 이메일 인증, `profiles`, `game_records`, `submit_game_result`
 - 현재 규칙: 8x6 그리드, 최대 타워 20기
 - 데스크톱과 모바일을 모두 지원해야 한다.
+- 진행 중: PR #15 초반 난도·타워 효율·무한 성장 밸런스 조정
+- PR #15 미리보기: https://balance-early-game-infinite-scaling-random-polygon.dawn01542.workers.dev
 
 ## 필수 원칙
 
@@ -23,7 +26,7 @@
 
 ## 현재 우선순위
 
-1. React+Vite 브랜치의 Cloudflare 미리보기 배포 검증
-2. 실제 웹 로그인·로그아웃 및 게임 기록 저장 회귀 검증
-3. 로그인·랭킹·게임 컨트롤 UI의 React 컴포넌트 전환
-4. 모바일 스토리와 조작 재검증
+1. PR #15 미리보기 플레이 및 밸런스 수치 검증
+2. 필요한 수치 재조정 후 `main` 병합
+3. 게임 UI 고급화
+4. 신규 타워·적·스테이지 콘텐츠 확장
