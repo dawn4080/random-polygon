@@ -64,14 +64,17 @@ class Enemy{
 
 class ChainParticle {
   constructor(x1, y1, x2, y2, color) {
-    this.x1 = x1; this.y1 = y1; this.x2 = x2; this.y2 = y2;
-    this.life = 15; this.maxLife = 15;
-    this.color = color;
+    this.x1=x1;this.y1=y1;this.x2=x2;this.y2=y2;
+    this.life=8;this.maxLife=8;this.color=color;
   }
   draw() {
-    const p = this.life / this.maxLife;
-    ctx.save();ctx.beginPath();ctx.moveTo(this.x1,this.y1);ctx.lineTo(this.x2,this.y2);
-    ctx.strokeStyle=this.color;ctx.lineWidth=3*p;ctx.shadowColor=this.color;ctx.shadowBlur=10;ctx.stroke();ctx.restore();
+    const p=this.life/this.maxLife;
+    ctx.save();
+    ctx.globalAlpha=p;
+    ctx.beginPath();ctx.moveTo(this.x1,this.y1);ctx.lineTo(this.x2,this.y2);
+    ctx.strokeStyle=this.color;ctx.lineWidth=2;
+    ctx.stroke();
+    ctx.restore();
     this.life--;
   }
 }
@@ -85,12 +88,12 @@ class Bullet{
     this.vulnerableAmount=vulnerableAmount;this.vulnerableDuration=vulnerableDuration;
   }
   move(dt,enemies,particles){
-    if(this.exploding){this.et+=dt;if(this.et>12)this.active=false;return;}
+    if(this.exploding){this.et+=dt;if(this.et>7)this.active=false;return;}
     if(!this.target.alive){this.active=false;return;}
     const dx=this.target.x-this.x,dy=this.target.y-this.y,d=Math.hypot(dx,dy),s=this.spd*dt;
     if(d<s+2){
       if(this.isGear){
-        this.triggerChainExplosion(this.x,this.y,this.target,enemies,particles,this.chainCount);this.exploding=true;
+        this.triggerChainExplosion(this.target,enemies,particles,this.chainCount);this.exploding=true;
       }else if(this.aoe){
         enemies.forEach(e=>{if(e.alive&&Math.hypot(e.x-this.x,e.y-this.y)<this.aoeR)e.takeDamage(this.dmg);});
         this.exploding=true;
@@ -102,40 +105,40 @@ class Bullet{
     }else{this.x+=dx/d*s;this.y+=dy/d*s;}
   }
 
-  triggerChainExplosion(sx,sy,currentTarget,enemies,particles,chainsLeft){
-    if(!currentTarget||chainsLeft<=0)return;
-    currentTarget.takeDamage(this.dmg);
-    for(let r=0;r<5;r++){
-      const angle=Math.random()*Math.PI*2,rx=currentTarget.x+Math.cos(angle)*15,ry=currentTarget.y+Math.sin(angle)*15;
-      particles.push(new ChainParticle(currentTarget.x,currentTarget.y,rx,ry,`hsl(${Math.random()*360}, 100%, 70%)`));
-    }
-    const aliveEnemies=enemies.filter(e=>e.alive&&e!==currentTarget);
-    if(aliveEnemies.length>0){
-      let nextTarget=aliveEnemies[0],minDist=Math.hypot(nextTarget.x-currentTarget.x,nextTarget.y-currentTarget.y);
-      for(const e of aliveEnemies){const d=Math.hypot(e.x-currentTarget.x,e.y-currentTarget.y);if(d<minDist){minDist=d;nextTarget=e;}}
-      if(minDist<180){
-        particles.push(new ChainParticle(currentTarget.x,currentTarget.y,nextTarget.x,nextTarget.y,'#ec4899'));
-        setTimeout(()=>this.triggerChainExplosion(currentTarget.x,currentTarget.y,nextTarget,enemies,particles,chainsLeft-1),80);
+  triggerChainExplosion(firstTarget,enemies,particles,maxChains){
+    let current=firstTarget;
+    const visited=new Set();
+    for(let hop=0;hop<maxChains&&current&&current.alive;hop++){
+      visited.add(current);
+      current.takeDamage(this.dmg);
+      const candidates=enemies.filter(e=>e.alive&&!visited.has(e));
+      let next=null,minDist=Infinity;
+      for(const e of candidates){
+        const dist=Math.hypot(e.x-current.x,e.y-current.y);
+        if(dist<180&&dist<minDist){minDist=dist;next=e;}
       }
+      if(!next)break;
+      particles.push(new ChainParticle(current.x,current.y,next.x,next.y,'#ec4899'));
+      current=next;
     }
   }
 
   draw(){
     if(this.exploding){
-      const p=this.et/12;ctx.beginPath();ctx.arc(this.x,this.y,this.aoeR*p,0,Math.PI*2);
-      ctx.fillStyle=`rgba(236, 72, 153, ${.35*(1-p)})`;ctx.fill();ctx.strokeStyle=`rgba(251,191,36,${.7*(1-p)})`;ctx.lineWidth=2;ctx.stroke();return;
+      const p=this.et/7;
+      ctx.beginPath();ctx.arc(this.x,this.y,10+8*p,0,Math.PI*2);
+      ctx.strokeStyle=`rgba(236,72,153,${0.55*(1-p)})`;ctx.lineWidth=2;ctx.stroke();return;
     }
     if(this.isGear){
-      ctx.save();ctx.translate(this.x,this.y);ctx.rotate(Date.now()/100);ctx.fillStyle=`hsl(${Date.now()%360}, 100%, 65%)`;
-      ctx.beginPath();ctx.arc(0,0,7,0,Math.PI*2);ctx.fill();ctx.strokeStyle='#fff';ctx.lineWidth=1;ctx.stroke();ctx.restore();
+      ctx.beginPath();ctx.arc(this.x,this.y,5,0,Math.PI*2);ctx.fillStyle='#ec4899';ctx.fill();
     }else{
-      ctx.beginPath();ctx.arc(this.x,this.y,this.aoe?6:4,0,Math.PI*2);ctx.fillStyle=this.color;ctx.shadowColor=this.color;ctx.shadowBlur=6;ctx.fill();ctx.shadowBlur=0;
+      ctx.beginPath();ctx.arc(this.x,this.y,this.aoe?6:4,0,Math.PI*2);ctx.fillStyle=this.color;ctx.fill();
     }
   }
 }
 
 class Tower{
-  constructor(col,row,shape){this.col=col;this.row=row;this.shape=shape;this.level=1;this.timer=0;this.updatePos();}
+  constructor(col,row,shape){this.col=col;this.row=row;this.shape=shape;this.level=1;this.timer=0;this.mergeLocked=false;this.updatePos();}
   updatePos(){this.cx=GRID_X+this.col*CELL+CELL/2;this.cy=GRID_Y+this.row*CELL+CELL/2;}
   get def(){return TDEFS[this.shape];}
   get upg(){return globalThis.gm?.typeUpg?.[this.shape]??{counts:[0,0,0],bDmg:0,bRange:0,bSpd:0,bAoe:0,bChains:0};}
@@ -188,6 +191,9 @@ class Tower{
     else if(this.shape==='Star'){this._star(cx,cy,5,22,10,d.color);}
     else if(this.shape==='Gear'){const rainbow=`hsl(${Date.now()%360}, 85%, 60%)`;this._gear(cx,cy,24,16,8,rainbow);}
     ctx.shadowBlur=0;ctx.fillStyle='#fff';ctx.font='bold 11px Segoe UI';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(`L${level}`,cx,cy+30);
+    if(this.mergeLocked&&this.shape!=='Gear'){
+      ctx.font='13px Segoe UI';ctx.fillStyle='#facc15';ctx.fillText('🔒',cx+22,cy-22);
+    }
   }
 }
 
