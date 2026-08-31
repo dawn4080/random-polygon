@@ -14,37 +14,52 @@ export function bindUi(gm, canvas) {
   document.getElementById('recipe-modal').addEventListener('click',e=>{
     if(e.target.id==='recipe-modal')gm.closeRecipeModal();
   });
-  document.getElementById('upg-body').addEventListener('click',e=>{
+
+  // 연구 버튼: 짧게 누르면 1회, 계속 누르면 보유 골드가 허용하는 동안 연속 연구
+  const upgBody=document.getElementById('upg-body');
+  let holdDelay=null,holdRepeat=null;
+  const stopHold=()=>{
+    if(holdDelay){clearTimeout(holdDelay);holdDelay=null;}
+    if(holdRepeat){clearInterval(holdRepeat);holdRepeat=null;}
+  };
+  upgBody.addEventListener('pointerdown',e=>{
     const btn=e.target.closest('.upg-btn');
-    if(btn&&!btn.disabled){
-      gm.buyUpg(btn.dataset.shape, parseInt(btn.dataset.idx, 10));
-    }
+    if(!btn||btn.disabled)return;
+    e.preventDefault();
+    const shape=btn.dataset.shape,idx=parseInt(btn.dataset.idx,10);
+    gm.buyUpg(shape,idx);
+    holdDelay=setTimeout(()=>{
+      holdRepeat=setInterval(()=>{
+        if(!gm.buyUpg(shape,idx))stopHold();
+      },120);
+    },420);
+  });
+  document.addEventListener('pointerup',stopHold);
+  document.addEventListener('pointercancel',stopHold);
+  window.addEventListener('blur',stopHold);
+  upgBody.addEventListener('contextmenu',e=>{
+    if(e.target.closest('.upg-btn'))e.preventDefault();
   });
   
   document.addEventListener('keydown',e=>{
     const k=e.key.toLowerCase();
-    
-    // 스토리 오프닝 단계에서는 ESC 누르면 스킵 가능하도록 지정
-    if (gm.storyOpen) {
-      if (e.key === 'Escape') {
-        gm.skipStory();
-      }
+    if(gm.storyOpen){
+      if(e.key==='Escape')gm.skipStory();
       return;
     }
-  
-    if(gm.gameOver) return;
-    if(k==='s') { gm.triggerBtnAnim('btn-s'); gm.summonTower(); }
-    if(k==='g') {
+    if(gm.gameOver)return;
+    if(k==='s'){gm.triggerBtnAnim('btn-s');gm.summonTower();}
+    if(k==='g'){
       gm.triggerBtnAnim('btn-g');
-      if(gm.recipeOpen) gm.closeRecipeModal(); else gm.openRecipeModal();
+      if(gm.recipeOpen)gm.closeRecipeModal();else gm.openRecipeModal();
     }
-    if(k==='a') { gm.triggerBtnAnim('btn-a'); gm.triggerAutoMerge(); }
-    if(k==='f') { gm.triggerBtnAnim('btn-f'); gm.toggleSpeed(); }
-    if(k==='u') {
+    if(k==='a'){gm.triggerBtnAnim('btn-a');gm.triggerAutoMerge();}
+    if(k==='l'){gm.triggerBtnAnim('btn-l');gm.toggleMergeLock();}
+    if(k==='f'){gm.triggerBtnAnim('btn-f');gm.toggleSpeed();}
+    if(k==='u'){
       gm.triggerBtnAnim('btn-u');
-      if(gm.upgradeOpen)gm.closeUpgrade(); else gm.openUpgrade();
+      if(gm.upgradeOpen)gm.closeUpgrade();else gm.openUpgrade();
     }
-    // 키보드 X키 눌렀을 때 판매 실행
-    if(k==='x') { gm.triggerBtnAnim('btn-x'); gm.sellTower(); }
+    if(k==='x'){gm.triggerBtnAnim('btn-x');gm.sellTower();}
   });
 }
