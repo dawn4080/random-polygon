@@ -11,8 +11,8 @@ class GameManager {
   init(){
     this.enemies=[];this.bullets=[]; this.particles=[];
     this.grid=Array.from({length:ROWS},()=>Array(COLS).fill(null));
-    this.gold=150;this.wave=0;this.score=0;
-    this.waveActive=false;this.spawnQ=0;this.spawnAcc=0;this.spawnInterval=16;
+    this.gold=180;this.wave=0;this.score=0;
+    this.waveActive=false;this.spawnQ=0;this.spawnAcc=0;this.spawnInterval=30;
 
     this.speedMult=1;
 
@@ -566,7 +566,7 @@ class GameManager {
       this.log(`👹 보스 웨이브 ${this.wave} 출현! 60초 내 저지하세요!`);
     }else{
       this.spawnQ=WAVE_ENEMIES;
-      this.spawnInterval=Math.max(4,16-Math.floor(this.wave*0.3));
+      this.spawnInterval=Math.max(18,30-Math.floor(this.wave*0.4));
       this.bossAlive=false;
       this.log(`⚔️ 웨이브 ${this.wave} 격전 시작.`);
     }
