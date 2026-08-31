@@ -8,16 +8,16 @@ class Enemy{
 
     if(isBoss){
       this.sz=28;
-      this.maxHp=(1300 + wave * 420 + Math.pow(wave, 1.8) * 45) * difficultyMultiplier;
+      this.maxHp=(1100 + wave * 400 + Math.pow(wave, 1.8) * 40) * difficultyMultiplier;
       this.spd=0.65 + wave * 0.02;
       this.color='#ff3300';
-      this.reward=Math.floor((150 + wave * 18) * difficultyMultiplier);
+      this.reward=Math.floor((150 + wave * 18) * Math.sqrt(difficultyMultiplier));
     }else{
       this.sz=10+Math.min(wave*0.35,7);
-      this.maxHp=(40 + wave * 25 + Math.pow(wave, 1.7) * 4.5) * difficultyMultiplier;
+      this.maxHp=(32 + wave * 23 + Math.pow(wave, 1.7) * 4) * difficultyMultiplier;
       this.spd=1.45 + wave * 0.05;
       this.color=`rgb(${Math.min(255,140+wave*8)},50,50)`;
-      this.reward=Math.floor((6 + wave * 1.2) * difficultyMultiplier);
+      this.reward=Math.floor((6 + wave * 1.2) * Math.sqrt(difficultyMultiplier));
     }
     this.hp=this.maxHp; this.alive=true;
   }
