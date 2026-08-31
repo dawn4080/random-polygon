@@ -9,6 +9,11 @@ import { initAuth, openAuth, openRanking } from './js/auth.js';
 globalThis.rpGameStarted = false;
 const gm = new GameManager();
 globalThis.gm = gm;
+
+// 첫 접속에서는 스토리보다 React 시작 화면이 먼저 보여야 한다.
+gm.storyOpen = false;
+gm.renderStory();
+
 bindUi(gm, canvas);
 
 createRoot(document.getElementById('react-app')).render(
