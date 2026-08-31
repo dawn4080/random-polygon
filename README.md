@@ -1,34 +1,45 @@
 # RP (Random Polygon)
 
-코딩 동아리에서 제작하는 브라우저 기반 랜덤 머지 디펜스 게임입니다.
+코딩 동아리에서 제작하는 React 기반 랜덤 머지 디펜스 게임입니다.
 
 ## 현재 상태
 
-- 원본 단일 HTML에서 HTML·CSS·JavaScript 구조 분리
+- React 19 + Vite 7 앱 진입 구조
+- 기존 Canvas 게임 엔진 모듈 유지
 - 사각형 순환 PATH 유지
 - 현재 그리드 8×6, 최대 타워 20기
 - 무지개 전설 기어와 연쇄 폭발 구현
 - 연구소를 열어도 전투가 계속 진행됨
 - 휴대폰 반응형 화면 지원
 
-## 가장 쉬운 실행
+## 개발 실행
 
-`RP_게임실행.html`을 더블클릭하면 별도 서버 없이 바로 실행됩니다.
-
-Windows 스마트 앱 컨트롤을 끌 필요가 없습니다. 서명되지 않은 `.exe`와 차단될 수 있는 `.bat` 대신 이 HTML 실행본을 사용합니다.
-
-## 개발용 실행
-
-분리된 개발용 `index.html`은 ES 모듈을 사용하므로 직접 더블클릭하지 않습니다. 개발할 때는 다음 명령으로 로컬 서버를 실행합니다.
+Node.js가 설치된 환경에서 다음 명령을 실행합니다.
 
 ```bash
-python -m http.server 8000
+npm install
+npm run dev
 ```
 
-브라우저에서 `http://127.0.0.1:8000`에 접속합니다.
+Windows에서는 `게임실행.bat`을 사용할 수도 있습니다.
 
-분리된 소스가 바뀌면 다음 명령으로 단일 HTML 실행본을 다시 생성합니다.
+## 검사와 빌드
 
 ```bash
-node tools/build-standalone.mjs
+npm test
+npm run build
 ```
+
+빌드 결과는 `dist/`에 생성됩니다.
+
+## 배포
+
+- 프런트엔드: Cloudflare Workers Static Assets
+- 인증·DB: Supabase
+- `main`은 운영 배포, 기능 브랜치는 미리보기 배포에 사용합니다.
+
+`RP_게임실행.html`은 React 전환 이전의 레거시 실행본이며 더 이상 최신 기능을 반영하지 않습니다.
+
+## 배포
+
+Cloudflare Workers 미리보기 배포를 사용합니다.

@@ -1,3 +1,4 @@
+import { createClient } from '@supabase/supabase-js';
 import { SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY } from './supabase-config.js';
 
 let supabaseClient = null;
@@ -177,12 +178,7 @@ async function initAuth() {
     submitGameResult(event.detail.score, event.detail.wave);
   });
 
-  if (!globalThis.supabase?.createClient) {
-    byId('account-label').textContent = '게스트 · 연결 오류';
-    return;
-  }
-
-  supabaseClient = globalThis.supabase.createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY);
+  supabaseClient = createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY);
   const { data } = await supabaseClient.auth.getSession();
   await renderAccount(data.session?.user || null);
   supabaseClient.auth.onAuthStateChange((_event, session) => {
