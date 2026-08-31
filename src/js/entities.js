@@ -142,7 +142,8 @@ class Tower{
   get dmg(){
     const u=this.upg;
     const growth=this.def.dmgGrowth??0;
-    const base=Math.round(this.def.dmg*Math.pow(1+growth,this.level-1))+u.bDmg;
+    const upgradedBase=this.def.dmg+u.bDmg;
+    const base=Math.round(upgradedBase*Math.pow(1+growth,this.level-1));
     const goldBonus=Math.floor((globalThis.gm?.gold??0)*GOLD_DMG_RATE);
     return base+goldBonus;
   }
