@@ -24,21 +24,33 @@
 
     <div id="game-container">
         <div id="left-panel">
-            <h1>Random Polygon</h1>
-            <div id="boss-wrap"><b>BOSS</b><div id="boss-outer"><div id="boss-inner"></div></div><span id="boss-timer">60</span></div>
-            <div id="ec-bar"><span>적 밀도</span><div id="ec-outer"><div id="ec-inner"></div></div><b id="ec-text">0 / 100</b></div>
-            <div id="canvas-wrap"><canvas id="gameCanvas" width="800" height="600"></canvas><div id="tooltip"></div><div id="overlay"><h2 id="overlay-title">GAME OVER</h2><p id="overlay-msg"></p><button id="overlay-btn" type="button">다시 시작</button></div></div>
-            <div id="log">게임 준비 중...</div>
-            <div id="info"><b>조작</b> 타워를 눌러 선택하고 빈 칸을 눌러 이동하세요. 같은 종류·레벨 타워를 겹치면 합성됩니다.</div>
+            <h1>⬡ Shape Defense</h1>
+            <div id="boss-wrap"><span>👹 보스 타임아웃</span><div id="boss-outer"><div id="boss-inner" style="width:100%"></div></div><span id="boss-timer">60s</span></div>
+            <div id="ec-bar"><span>적 밀도</span><div id="ec-outer"><div id="ec-inner" style="width:0%"></div></div><span id="ec-text">0 / 100</span></div>
+            <div id="canvas-wrap"><canvas id="c" width="820" height="620"></canvas><div id="tooltip"><h3 id="tt-name"></h3><div id="tt-body"></div></div><div id="overlay"><h2 id="ov-title">게임 오버</h2><p id="ov-sub"></p><button onclick="gm.restart()">다시 시작</button></div></div>
+            <div id="log">게임 시작 대기 중...</div>
+            <div id="info"><b>[오프닝 프롤로그]</b> 다각형의 차별에 반격한 동그라미 군대의 침략 사건! 방어선을 굳건히 하십시오. <br><b>배속 시스템:</b> 1배속 ➔ 1.5배속 ➔ 2.0배속 순환 토글. 필드 최대 소환 수량 <b>20마리 제한</b>.</div>
         </div>
-        <aside id="right-panel">
-            <div class="stat-board"><div class="stat-box"><span class="stat-lbl">GOLD</span><b id="gold" class="stat-v cg">0</b></div><div class="stat-box"><span class="stat-lbl">WAVE</span><b id="wave" class="stat-v cw">0</b></div><div class="stat-box"><span class="stat-lbl">SCORE</span><b id="score" class="stat-v cs">0</b></div><div class="stat-box"><span class="stat-lbl">ENEMY</span><b id="enemy-count" class="stat-v ce">0</b></div></div>
-            <div id="control-btns"><button id="btn-s" class="main-btn" type="button">타워 소환<span class="sub-lbl">50G · S</span></button><button id="btn-x" class="main-btn" type="button">선택 판매<span class="sub-lbl">X</span></button><button id="btn-a" class="main-btn" type="button">자동 합성<span class="sub-lbl">A</span></button><button id="btn-l" class="main-btn" type="button">합성 잠금<span class="sub-lbl">L</span></button><button id="btn-g" class="main-btn" type="button">전설 조합소<span class="sub-lbl">G</span></button><button id="btn-u" class="main-btn" type="button">연구소<span class="sub-lbl">U</span></button><button id="btn-f" class="main-btn" type="button">배속<span class="sub-lbl">F</span></button></div>
-            <div class="recipe-card"><div class="recipe-title"><span>전설 기어 조합</span><span>⚙️</span></div><div id="recipe-list" class="recipe-list"></div></div>
-        </aside>
+
+        <div id="right-panel">
+            <div class="stat-board"><div class="stat-box"><span class="stat-lbl">소지 골드</span><span class="stat-v cg" id="s-gold">180G</span></div><div class="stat-box"><span class="stat-lbl">현재 웨이브</span><span class="stat-v cw" id="s-wave">0</span></div><div class="stat-box"><span class="stat-lbl">타워 개수</span><span class="stat-v cs" id="s-towers">0 / 20</span></div><div class="stat-box"><span class="stat-lbl">획득 점수</span><span class="stat-v ce" id="s-score">0</span></div></div>
+            <div id="control-btns">
+                <button class="main-btn" id="btn-s" type="button" onclick="gm.triggerBtnAnim('btn-s'); gm.summonTower()"><span>🤖 타워 소환</span><span class="sub-lbl" id="s-cost">비용: 50G [S]</span></button>
+                <button class="main-btn" id="btn-x" type="button" onclick="gm.triggerBtnAnim('btn-x'); gm.sellTower()" disabled><span>💰 타워 판매</span><span class="sub-lbl" id="x-cost">타워 선택 필요 [X]</span></button>
+                <button class="main-btn" id="btn-l" type="button" onclick="gm.triggerBtnAnim('btn-l'); gm.toggleMergeLock()" disabled><span>🔓 합성 잠금</span><span class="sub-lbl" id="l-state">타워 선택 필요 [L]</span></button>
+                <button class="main-btn" id="btn-g" type="button" onclick="gm.triggerBtnAnim('btn-g'); gm.openRecipeModal()"><span>🔮 조합 연성소</span><span class="sub-lbl">전설 조합법 [G]</span></button>
+                <button class="main-btn" id="btn-a" type="button" onclick="gm.triggerBtnAnim('btn-a'); gm.triggerAutoMerge()"><span>✨ 일괄 자동합성</span><span class="sub-lbl">잠금 제외 머지 [A]</span></button>
+                <button class="main-btn" id="btn-u" type="button" onclick="gm.triggerBtnAnim('btn-u'); gm.upgradeOpen?gm.closeUpgrade():gm.openUpgrade()"><span>🛠️ 종류 연구/강화</span><span class="sub-lbl">꾹 눌러 연속 연구 [U]</span></button>
+                <button class="main-btn" id="btn-f" type="button" onclick="gm.triggerBtnAnim('btn-f'); gm.toggleSpeed()"><span id="speed-txt">▶ 속도: 1.0×</span><span class="sub-lbl">클릭 시 토글 [F]</span></button>
+            </div>
+            <div class="recipe-card"><div class="recipe-title"><span>⚙️ 전설 기어 조합법</span><span>정확한 레벨</span></div><div class="recipe-list"><div class="recipe-item" id="rec-tri"><span>▲ 삼각형 타워</span><span id="rec-tri-st" class="no">L7 필요</span></div><div class="recipe-item" id="rec-squ"><span>■ 사각형 타워</span><span id="rec-squ-st" class="no">L6 필요</span></div><div class="recipe-item" id="rec-star"><span>★ 별 타워</span><span id="rec-star-st" class="no">L5 필요</span></div></div></div>
+        </div>
     </div>
 
-    <div id="upg-modal"><div id="upg-box"><h2>연구소</h2><p class="sub">타워 종류별 능력을 영구 강화합니다.</p><div id="upg-body"></div><button id="upg-close" type="button">닫기</button></div></div>
-    <script type="module" src="src/browser-main.js"></script>
+    <div id="upg-modal"><div id="upg-box"><h2>종류 강화 연구소</h2><div class="sub" id="upg-sub">현재 골드: --</div><div id="upg-body"></div><button id="upg-close" type="button" onclick="gm.closeUpgrade()">연구소 닫기 [U]</button></div></div>
+
+    <div id="recipe-modal" style="display:none;" class="fixed inset-0 bg-black/85 z-[100] flex items-start justify-center pt-12 px-4 overflow-y-auto"><div class="bg-[#0f1c2e] border-2 border-pink-500/50 rounded-[14px] p-6 w-[680px] max-w-full my-12 shadow-[0_0_30px_rgba(236,72,153,0.3)]"><div class="flex justify-between items-center border-b border-[#1e3050] pb-4 mb-5"><div><h2 class="text-xl font-bold text-pink-400 flex items-center gap-2">🔮 전설 조합 연성소</h2><p class="text-xs text-[#5a7090] mt-1">정확히 삼각형 Lv.7 + 사각형 Lv.6 + 별 Lv.5를 융합합니다. 재료는 합성 잠금으로 보호할 수 있습니다.</p></div><button onclick="gm.closeRecipeModal()" class="text-[#5a7090] hover:text-white font-bold text-xl transition">&times;</button></div><div class="grid grid-cols-1 md:grid-cols-5 items-center gap-4 bg-[#0a1520] border border-[#1e3050] rounded-[10px] p-4"><div class="md:col-span-2 flex flex-col gap-3.5" id="rec-modal-materials"></div><div class="flex flex-col items-center justify-center text-pink-500 font-extrabold text-2xl py-2"><span class="animate-bounce">➔</span><span class="text-[10px] text-[#4a7a9a] font-normal tracking-wider mt-1">FUSION</span></div><div class="md:col-span-2 bg-[#0d1a2a] border border-pink-500/20 rounded-[10px] p-4 flex flex-col items-center text-center gap-2.5"><span class="text-[10px] font-bold text-pink-400 bg-pink-950/40 px-3 py-1 rounded-full border border-pink-800">연성 완료 항목</span><div class="w-16 h-16 flex items-center justify-center my-1.5"><svg class="w-16 h-16 gear-spin-anim" viewBox="0 0 100 100"><defs><linearGradient id="rainbowGradModal" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#ff007f"/><stop offset="50%" stop-color="#7f00ff"/><stop offset="100%" stop-color="#00f0ff"/></linearGradient></defs><circle cx="50" cy="50" r="30" fill="none" stroke="url(#rainbowGradModal)" stroke-width="12" stroke-dasharray="10 6"/><circle cx="50" cy="50" r="18" fill="none" stroke="url(#rainbowGradModal)" stroke-width="6"/><circle cx="50" cy="50" r="6" fill="#0d1a2a"/></svg></div><h4 class="font-bold text-sm text-white">⚙️ 전설 기어 타워</h4><p class="text-[11px] text-[#5a7a9a] leading-relaxed">가벼운 전기선 연쇄 이펙트로 적들을 연속 타격합니다.</p></div></div><div class="mt-6 flex flex-col gap-2.5"><button id="modal-combine-btn" onclick="gm.fuseLegendary()" class="w-full py-3.5 rounded-[10px] text-white font-bold text-sm bg-gradient-to-r from-pink-600 to-purple-600 hover:from-pink-500 hover:to-purple-500 transition shadow-[0_4px_15px_rgba(236,72,153,0.3)] duration-200">🔮 전설 조합 연성 실행</button><button onclick="gm.closeRecipeModal()" class="w-full py-2.5 rounded-[10px] border border-[#2a4a6a] bg-[#162033] hover:bg-[#1e3050] text-[#7eb8f7] font-bold text-xs transition">조합소 나가기</button></div></div></div>
+
+    <script type="module" src="./src/browser-main.js"></script>
 </body>
 </html>
