@@ -9,6 +9,7 @@ function makeElement(id) {
     innerHTML: '',
     disabled: false,
     dataset: {},
+    firstElementChild: { textContent: '' },
     classList: {
       add() {},
       remove() {},
