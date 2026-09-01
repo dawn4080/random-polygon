@@ -45,7 +45,7 @@ globalThis.document = {
 
 const [{ GameManager }, { Enemy }] = await Promise.all([
   import('../src/js/game-manager.js'),
-  import('../src/js/entities.js'),
+  import('../src/game/enemies/index.js'),
 ]);
 
 const gm = new GameManager();
