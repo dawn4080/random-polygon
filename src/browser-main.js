@@ -1,42 +1,9 @@
 import { canvas } from './js/config.js';
 import { GameManager } from './js/game-manager.js';
 import { bindUi } from './js/ui.js';
+import { installBrowserCompatibility } from './app/browser-compat.js';
 
-// 모바일/태블릿 브라우저 기본 제스처가 게임 조작을 가로채지 않도록 차단한다.
-const gestureStyle=document.createElement('style');
-gestureStyle.textContent=`
-html,body,#game-container,#start-screen,#story-modal,#upg-modal,#recipe-modal,#settings-modal,#ranking-modal,
-button,.main-btn,.upg-btn,canvas {
-  touch-action: manipulation;
-  -webkit-user-select: none;
-  user-select: none;
-  -webkit-touch-callout: none;
-  -webkit-tap-highlight-color: transparent;
-}
-canvas,#canvas-wrap { touch-action: none; }
-input,textarea,[contenteditable="true"] {
-  -webkit-user-select: text;
-  user-select: text;
-  -webkit-touch-callout: default;
-}
-`;
-document.head.appendChild(gestureStyle);
-
-// iOS Safari의 제스처 확대(핀치/더블탭 계열)와 더블탭 확대를 게임 UI에서 방지한다.
-for(const type of ['gesturestart','gesturechange','gestureend']){
-  document.addEventListener(type,e=>e.preventDefault(),{passive:false});
-}
-let lastTouchEnd=0;
-document.addEventListener('touchend',e=>{
-  if(e.target.closest('input,textarea,[contenteditable="true"]'))return;
-  const now=Date.now();
-  if(now-lastTouchEnd<=300)e.preventDefault();
-  lastTouchEnd=now;
-},{passive:false});
-document.addEventListener('contextmenu',e=>{
-  if(e.target.closest('input,textarea,[contenteditable="true"]'))return;
-  if(e.target.closest('#game-container,#start-screen,#story-modal,#upg-modal,#recipe-modal,#settings-modal,#ranking-modal,button'))e.preventDefault();
-});
+installBrowserCompatibility();
 
 globalThis.rpGameStarted = false;
 const gm = new GameManager();
