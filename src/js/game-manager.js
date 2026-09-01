@@ -3,7 +3,8 @@ import {
   BOSS_EVERY, BOSS_LIMIT, WAVE_ENEMIES, INTER_DELAY, SUMMON_COST_INIT,
   GOLD_DMG_RATE, SHAPES, RARITY, TDEFS, rollShape, canvas, ctx,
 } from './config.js';
-import { Enemy, Tower } from './entities.js';
+import { Enemy } from '../game/enemies/index.js';
+import { Tower } from '../game/towers/tower.js';
 
 class GameManager {
   constructor(){this.init();}
