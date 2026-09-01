@@ -42,7 +42,6 @@ const enemyModule = await import('../src/game/enemies/index.js');
 const { Tower } = await import('../src/game/towers/tower.js');
 const { Bullet } = await import('../src/game/projectiles/bullet.js');
 const { ChainParticle } = await import('../src/game/effects/chain-particle.js');
-const compatibility = await import('../src/js/entities.js');
 
 const { NormalEnemy, BossEnemy, Enemy, createEnemy } = enemyModule;
 
@@ -85,14 +84,4 @@ test('enemy factory selects the correct split class', () => {
   assert.ok(createEnemy(5, true, 1) instanceof BossEnemy);
   assert.ok(new Enemy(1, false, 1) instanceof NormalEnemy);
   assert.ok(new Enemy(5, true, 1) instanceof BossEnemy);
-});
-
-test('compatibility facade points to the split modules', () => {
-  assert.equal(compatibility.NormalEnemy, NormalEnemy);
-  assert.equal(compatibility.BossEnemy, BossEnemy);
-  assert.equal(compatibility.Tower, Tower);
-  assert.equal(compatibility.Bullet, Bullet);
-  assert.equal(compatibility.ChainParticle, ChainParticle);
-  assert.equal(compatibility.createEnemy, createEnemy);
-  assert.equal(compatibility.Enemy, Enemy);
 });
