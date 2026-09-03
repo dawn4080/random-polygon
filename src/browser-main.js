@@ -2,6 +2,7 @@ import { canvas } from './js/config.js';
 import { GameManager } from './js/game-manager.js';
 import { bindUi } from './js/ui.js';
 import { installBrowserCompatibility } from './app/browser-compat.js';
+import { readSettings, applySettings } from './app/settings.js';
 
 installBrowserCompatibility();
 
@@ -13,20 +14,12 @@ gm.storyOpen = false;
 gm.renderStory();
 bindUi(gm, canvas);
 
-const SETTINGS_KEY='rp:settings';
-const defaultSettings={storyEnabled:true,reducedMotion:false};
-const readSettings=()=>{try{return{...defaultSettings,...JSON.parse(localStorage.getItem(SETTINGS_KEY)||'{}')}}catch{return{...defaultSettings}}};
 let settings=readSettings();
 let signedIn=false;
 let nickname=null;
 let started=false;
 
-function applySettings(){
-  globalThis.rpSettings=settings;
-  document.body.classList.toggle('reduced-motion',settings.reducedMotion);
-  try{localStorage.setItem(SETTINGS_KEY,JSON.stringify(settings));}catch{}
-}
-applySettings();
+applySettings(settings);
 
 const root=document.getElementById('react-app');
 function renderStart(){
@@ -55,7 +48,7 @@ function openSettings(inGame=started){
   const close=()=>wrap.remove();
   document.getElementById('settings-close').onclick=close;
   wrap.onclick=e=>{if(e.target===wrap)close();};
-  document.getElementById('settings-done').onclick=()=>{settings={storyEnabled:document.getElementById('set-story').checked,reducedMotion:document.getElementById('set-motion').checked};applySettings();close();};
+  document.getElementById('settings-done').onclick=()=>{settings={storyEnabled:document.getElementById('set-story').checked,reducedMotion:document.getElementById('set-motion').checked};applySettings(settings);close();};
   const quit=document.getElementById('settings-quit');
   if(quit)quit.onclick=()=>{if(confirm('현재 게임 진행 상황을 종료하고 시작 화면으로 돌아갈까요?')){close();started=false;globalThis.rpGameStarted=false;gm.init();gm.storyOpen=false;gm.renderStory();renderStart();}};
 }
